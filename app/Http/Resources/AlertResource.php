@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Alert;
+use App\Models\AlertTriage;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -36,6 +37,30 @@ class AlertResource extends JsonResource
             'severity' => $this->severity->value,
             'climatology_years' => $this->climatology_years,
             'message' => $this->message,
+            'triage' => $this->whenLoaded('triage', fn () => $this->triagePayload($this->resource->triage)),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function triagePayload(?AlertTriage $triage): ?array
+    {
+        if ($triage === null) {
+            return null;
+        }
+
+        return [
+            'cause' => $triage->cause,
+            'cause_label' => AlertTriage::CAUSES[$triage->cause] ?? $triage->cause,
+            'cause_probability' => $triage->cause_probabilities[$triage->cause] ?? null,
+            'probabilities' => $triage->cause_probabilities,
+            'artifact_probability' => $triage->artifact_probability,
+            'concern_level' => $triage->concern_level,
+            'concern_label' => AlertTriage::CONCERN_LEVELS[$triage->concern_level] ?? null,
+            'concern_score' => $triage->concern_score,
+            'model' => $triage->model,
+            'triaged_at' => $triage->triaged_at->toIso8601String(),
         ];
     }
 }

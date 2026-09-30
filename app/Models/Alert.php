@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property AlertSeverity $severity
  * @property int $climatology_years
  * @property string $message
+ * @property-read AlertTriage|null $triage advisory reading, set by AlertTriage::attachTo()
  */
 class Alert extends Model
 {

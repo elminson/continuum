@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\AlertResource;
 use App\Http\Resources\RegionResource;
 use App\Models\Alert;
+use App\Models\AlertTriage;
 use App\Models\Region;
 use App\Services\Insights\DataIntake;
 use App\Services\Insights\RegionSummary;
@@ -29,6 +30,8 @@ class DashboardController extends Controller
             ->orderByDesc('z_score')
             ->limit(6)
             ->get();
+
+        AlertTriage::attachTo($alerts);
 
         return Inertia::render('Dashboard', [
             'global' => $summary->global(),

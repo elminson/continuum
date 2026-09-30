@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\AlertSeverity;
 use App\Http\Resources\AlertResource;
 use App\Models\Alert;
+use App\Models\AlertTriage;
 use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,8 @@ class AlertController extends Controller
             ->orderByDesc('z_score')
             ->paginate(25)
             ->withQueryString();
+
+        AlertTriage::attachTo($alerts->getCollection());
 
         return Inertia::render('Alerts', [
             'alerts' => AlertResource::collection($alerts),

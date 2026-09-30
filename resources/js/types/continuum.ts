@@ -139,6 +139,20 @@ export type FireAlert = {
     severity: Severity;
     climatology_years: number;
     message: string;
+    triage?: AlertTriage | null;
+};
+
+export type AlertTriage = {
+    cause: 'seasonal' | 'outbreak' | 'data_gap' | 'sensor';
+    cause_label: string;
+    cause_probability: number | null;
+    probabilities: Record<string, number>;
+    artifact_probability: number;
+    concern_level: number;
+    concern_label: string | null;
+    concern_score: number;
+    model: string;
+    triaged_at: string;
 };
 
 export type ClimatologyPoint = {

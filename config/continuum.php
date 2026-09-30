@@ -28,6 +28,8 @@ return [
         'ingest_public_window' => env('CONTINUUM_INGEST_PUBLIC_WINDOW', '24h'),
         // Fold whatever arrived into the calendars shortly after each pull.
         'harmonize_cron' => env('CONTINUUM_HARMONIZE_CRON', '25 * * * *'),
+        // Ask Laya to read new or changed unusual periods after each harmonization.
+        'triage_cron' => env('CONTINUUM_TRIAGE_CRON', '50 * * * *'),
     ],
 
     'firms' => [

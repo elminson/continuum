@@ -30,3 +30,12 @@ Schedule::command('continuum:warm-cache')
     ->withoutOverlapping()
     ->onOneServer()
     ->runInBackground();
+
+// Advisory readings of new or changed unusual periods by Laya, after each
+// hourly harmonization. Skips quietly when the model is not reachable.
+Schedule::command('continuum:triage-alerts')
+    ->cron((string) config('continuum.schedule.triage_cron', '50 * * * *'))
+    ->timezone('UTC')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground();

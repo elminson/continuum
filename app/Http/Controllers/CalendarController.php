@@ -9,6 +9,7 @@ use App\Http\Requests\CalendarQueryRequest;
 use App\Http\Resources\AlertResource;
 use App\Http\Resources\CalibrationFactorResource;
 use App\Http\Resources\RegionResource;
+use App\Models\AlertTriage;
 use App\Models\Region;
 use App\Services\Firms\AreaApiClient;
 use App\Services\Firms\BackfillPlanner;
@@ -61,7 +62,7 @@ class CalendarController extends Controller
             ],
             'series' => $calendar->series($region, $period, $method, $reference, $request->from(), $request->to()),
             'critical' => $critical->forRegion($region, CalendarPeriod::Month, $method, $reference),
-            'alerts' => AlertResource::collection($region->alerts()->orderByDesc('z_score')->limit(12)->get())->resolve(),
+            'alerts' => AlertResource::collection(tap($region->alerts()->orderByDesc('z_score')->limit(12)->get(), AlertTriage::attachTo(...)))->resolve(),
             'factors' => CalibrationFactorResource::collection($region->calibrationFactors()->orderBy('method')->orderBy('reference')->orderBy('month')->get())->resolve(),
             'receipt' => Inertia::defer(fn () => $receipt->for($region, $period, $method, $reference)),
             'backfill' => $planner->activeBatch($region),

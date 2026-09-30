@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\CalendarPeriod;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AlertResource;
+use App\Models\AlertTriage;
 use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -26,6 +27,8 @@ class AlertController extends Controller
             ->orderByDesc('period_start')
             ->orderByDesc('z_score')
             ->paginate(50);
+
+        AlertTriage::attachTo($alerts->getCollection());
 
         return AlertResource::collection($alerts);
     }

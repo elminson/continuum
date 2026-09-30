@@ -104,3 +104,11 @@ it('grades the analyst on the labelled benchmark and stores the score', function
         ->and($evaluation->results[0]['passed'])->toBeTrue()
         ->and($evaluation->results[3]['passed'])->toBeFalse();
 });
+
+it('can grade another model without changing the one that reads live alerts', function () {
+    fakeAnalyst();
+
+    $this->artisan('continuum:evaluate-analyst', ['--model' => 'mistral-nemo:12b'])->assertSuccessful();
+
+    expect(AiEvaluation::latestFor(AlertAnalystBenchmark::SUITE)->model)->toBe('mistral-nemo:12b');
+});

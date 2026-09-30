@@ -7,12 +7,17 @@ use Illuminate\Console\Command;
 
 class EvaluateAnalystCommand extends Command
 {
-    protected $signature = 'continuum:evaluate-analyst';
+    protected $signature = 'continuum:evaluate-analyst
+        {--model= : Evaluate this model instead of continuum.analyst.model (the live readings keep using the configured one)}';
 
     protected $description = 'Run the alert analyst against its labelled benchmark and store the score';
 
     public function handle(AlertAnalystBenchmark $benchmark): int
     {
+        if ($this->option('model')) {
+            config()->set('continuum.analyst.model', (string) $this->option('model'));
+        }
+
         $evaluation = $benchmark->run(function (array $result): void {
             $mark = $result['passed'] ? '<fg=green>pass</>' : '<fg=red>fail</>';
             $got = $result['got'] === null ? 'error: '.$result['error'] : sprintf('%s / %s / %s', $result['got']['baseline_reliable'] ? 'reliable' : 'unreliable', $result['got']['cause'], $result['got']['attention']);

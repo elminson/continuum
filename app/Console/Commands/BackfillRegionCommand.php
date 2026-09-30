@@ -19,7 +19,8 @@ class BackfillRegionCommand extends Command
         {--source=* : FIRMS sources (default: MODIS_SP, VIIRS_SNPP_SP, VIIRS_NOAA20_SP)}
         {--from= : First date (default: each source\'s earliest date)}
         {--to= : Last date (default: yesterday)}
-        {--sync : Run the windows now instead of queueing them}';
+        {--sync : Run the windows now instead of queueing them}
+        {--force : Queue even if a backfill batch for this region is still running}';
 
     protected $description = 'Backfill a region from the FIRMS Area API (requires FIRMS_MAP_KEY), five days per request';
 
@@ -37,6 +38,19 @@ class BackfillRegionCommand extends Command
             $this->error('Unknown region slug.');
 
             return self::INVALID;
+        }
+
+        if (! $this->option('sync') && ! $this->option('force') && ($active = $planner->activeBatch($region)) !== null) {
+            $this->warn(sprintf(
+                'A backfill is already running for %s (batch %s, %d of %d windows done%s). Wait for it or pass --force to queue another.',
+                $region->name,
+                $active['id'],
+                $active['done'],
+                $active['total'],
+                $active['failed'] > 0 ? ", {$active['failed']} failed" : '',
+            ));
+
+            return self::FAILURE;
         }
 
         $sources = $this->option('source') === []

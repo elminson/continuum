@@ -2,13 +2,13 @@
 import { Link } from '@inertiajs/vue3';
 import {
     AlertTriangle,
+    ArrowRight,
     CheckCircle2,
     Database,
     Loader2,
     RefreshCw,
 } from '@lucide/vue';
 import { computed } from 'vue';
-import { Badge } from '@/components/ui/badge';
 import {
     formatCompact,
     formatDate,
@@ -23,20 +23,9 @@ import type {
     IntakeArea,
     IntakeRun,
 } from '@/types/continuum';
+import { ingestion } from '@/routes';
 
 const props = defineProps<{ intake: DataIntake }>();
-
-const statusVariant = (
-    status: IngestStatus,
-): 'default' | 'secondary' | 'destructive' | 'outline' =>
-    status === 'failed'
-        ? 'destructive'
-        : status === 'running'
-          ? 'default'
-          : 'secondary';
-
-const statusLabel = (status: IngestStatus): string =>
-    status === 'running' ? 'Running' : status === 'failed' ? 'Failed' : 'Done';
 
 const areaState = (area: IntakeArea): { label: string; tone: string } => {
     if (area.backfill) {
@@ -62,17 +51,6 @@ const modisShare = (rows: { modis: number; viirs: number }): number => {
     const total = rows.modis + rows.viirs;
 
     return total > 0 ? (100 * rows.modis) / total : 0;
-};
-
-const runWindow = (run: IntakeRun): string => {
-    if (!run.date_from) {
-        return '';
-    }
-    if (!run.date_to || run.date_to === run.date_from) {
-        return formatDate(run.date_from);
-    }
-
-    return `${formatDate(run.date_from)} – ${formatDate(run.date_to)}`;
 };
 
 const totals = computed(() => props.intake.totals);
@@ -359,79 +337,18 @@ const feed = computed(() => props.intake.public_feed);
         </div>
 
         <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <div>
-                <h4
-                    class="mb-2 text-xs font-semibold text-muted-foreground uppercase"
-                >
-                    Latest ingest runs
-                </h4>
-                <ul
-                    class="divide-y divide-sidebar-border/40 text-xs dark:divide-sidebar-border/60"
-                >
-                    <li
-                        v-for="run in intake.recent_runs"
-                        :key="run.id"
-                        class="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5"
-                    >
-                        <Badge
-                            :variant="statusVariant(run.status)"
-                            class="w-16 justify-center"
-                        >
-                            <Loader2
-                                v-if="run.status === 'running'"
-                                class="animate-spin"
-                            />
-                            {{ statusLabel(run.status) }}
-                        </Badge>
-                        <span
-                            class="w-24 shrink-0 text-muted-foreground tabular-nums"
-                            :title="formatDateTime(run.started_at)"
-                        >
-                            {{ formatRelative(run.started_at) }}
-                        </span>
-                        <span class="min-w-0 flex-1 truncate">
-                            <span
-                                v-if="run.region"
-                                class="mr-1.5 inline-block size-2 rounded-full align-middle"
-                                :style="{ backgroundColor: run.region.color }"
-                            />
-                            <span v-if="run.region" class="font-medium"
-                                >{{ run.region.name.split(' (')[0] }} ·
-                            </span>
-                            {{ run.label }}
-                            <span
-                                v-if="runWindow(run)"
-                                class="text-muted-foreground"
-                            >
-                                · {{ runWindow(run) }}</span
-                            >
-                        </span>
-                        <span class="shrink-0 tabular-nums">
-                            <span class="font-medium">{{
-                                formatNumber(run.rows_inserted)
-                            }}</span>
-                            <span class="text-muted-foreground"> rows</span>
-                            <span
-                                v-if="run.duration_s !== null"
-                                class="text-muted-foreground"
-                            >
-                                · {{ run.duration_s }}s</span
-                            >
-                        </span>
-                        <span
-                            v-if="run.error"
-                            class="w-full truncate text-destructive"
-                            :title="run.error"
-                            >{{ run.error }}</span
-                        >
-                    </li>
-                    <li
-                        v-if="intake.recent_runs.length === 0"
-                        class="py-3 text-muted-foreground"
-                    >
-                        Nothing ingested yet.
-                    </li>
-                </ul>
+            <div
+                class="flex flex-col items-start justify-center gap-2 rounded-lg border border-dashed border-sidebar-border/70 p-4 dark:border-sidebar-border"
+            >
+                <p class="text-sm">
+                    Every ingest run, with filters and live backfill progress,
+                    now has its own page.
+                </p>
+                <Link
+                    :href="ingestion()"
+                    class="inline-flex items-center gap-1 text-sm font-medium hover:underline"
+                    >Open ingestion <ArrowRight class="size-4"
+                /></Link>
             </div>
 
             <div>
@@ -459,8 +376,8 @@ const feed = computed(() => props.intake.public_feed);
                         v-if="feed.latest.length === 0"
                         class="text-muted-foreground"
                     >
-                        No public feed pulled yet. The scheduler fetches the
-                        48-hour global feeds daily at 03:00 UTC.
+                        No public feed pulled yet. The scheduler pulls the last
+                        24 hours of the global feeds every hour.
                     </li>
                 </ul>
                 <p

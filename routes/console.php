@@ -10,15 +10,17 @@ DevCommands::bufferSize(300);
 DevCommands::except('queue');
 DevCommands::artisan('queue:listen --queue='.BackfillPlanner::PRIORITY_QUEUE.',default --tries=1 --timeout=0 --memory=512', 'worker');
 
-Schedule::command('firms:ingest-public --window=48h --presets')
-    ->dailyAt((string) config('continuum.schedule.ingest_public_at', '03:00'))
+Schedule::command('firms:ingest-public --presets --window='.config('continuum.schedule.ingest_public_window', '24h'))
+    ->cron((string) config('continuum.schedule.ingest_public_cron', '5 * * * *'))
     ->timezone('UTC')
+    ->runInBackground()
     ->withoutOverlapping()
     ->onOneServer();
 
 Schedule::command('continuum:harmonize')
-    ->dailyAt((string) config('continuum.schedule.harmonize_at', '04:30'))
+    ->cron((string) config('continuum.schedule.harmonize_cron', '25 * * * *'))
     ->timezone('UTC')
+    ->runInBackground()
     ->withoutOverlapping()
     ->onOneServer();
 

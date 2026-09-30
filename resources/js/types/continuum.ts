@@ -367,6 +367,7 @@ export type DataIntake = {
         runs: IntakeRunCounts;
         last_run_at: string | null;
         next_run_at: string | null;
+        window: string;
         latest: {
             feed: string;
             status: IngestStatus;

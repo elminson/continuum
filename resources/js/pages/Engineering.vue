@@ -225,7 +225,7 @@ const layers: ArchitectureLayer[] = [
             {
                 icon: Radar,
                 title: 'FIRMS global feeds',
-                detail: 'Key-free 24 h to 7 d CSVs, pulled daily at 03:00 UTC.',
+                detail: 'Key-free CSVs, the last 24 h pulled every hour.',
             },
             {
                 icon: Globe2,
@@ -245,7 +245,7 @@ const layers: ArchitectureLayer[] = [
             {
                 icon: Timer,
                 title: 'Scheduler',
-                detail: 'Daily ingest and harmonization, cache warming every 5 min.',
+                detail: 'Hourly ingest and harmonization, cache warming every 5 min.',
             },
         ],
     },

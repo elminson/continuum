@@ -10,6 +10,7 @@ use App\Models\IngestRun;
 use App\Models\Region;
 use App\Services\Firms\BackfillPlanner;
 use Carbon\CarbonImmutable;
+use Cron\CronExpression;
 use Illuminate\Cache\Repository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -234,7 +235,8 @@ class DataIntake
                 'running' => (int) ($stats->running ?? 0),
             ],
             'last_run_at' => $this->iso($stats->last_started_at ?? null),
-            'next_run_at' => $this->nextDailyRun((string) config('continuum.schedule.ingest_public_at', '03:00')),
+            'next_run_at' => $this->nextRun((string) config('continuum.schedule.ingest_public_cron', '5 * * * *')),
+            'window' => (string) config('continuum.schedule.ingest_public_window', '24h'),
             'latest' => $latest,
         ];
     }
@@ -328,15 +330,11 @@ class DataIntake
     }
 
     /**
-     * Next occurrence of a daily HH:MM (UTC) slot, as scheduled in routes/console.php.
+     * Next time a scheduled cron expression fires (UTC), as in routes/console.php.
      */
-    private function nextDailyRun(string $time): string
+    private function nextRun(string $cron): string
     {
-        [$hour, $minute] = array_map('intval', array_pad(explode(':', $time, 2), 2, 0));
-        $now = CarbonImmutable::now('UTC');
-        $next = $now->setTime($hour, $minute);
-
-        return ($next->lessThanOrEqualTo($now) ? $next->addDay() : $next)->toIso8601String();
+        return CarbonImmutable::instance((new CronExpression($cron))->getNextRunDate(now('UTC')))->toIso8601String();
     }
 
     /**

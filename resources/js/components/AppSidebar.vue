@@ -5,6 +5,7 @@ import {
     BookOpenText,
     Code2,
     Cpu,
+    DatabaseZap,
     FolderGit2,
     Globe2,
     LayoutGrid,
@@ -25,7 +26,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { apiDocs, engineering, home, login, method } from '@/routes';
+import { apiDocs, engineering, home, ingestion, login, method } from '@/routes';
 import { index as alerts } from '@/routes/alerts';
 import { index as regions } from '@/routes/regions';
 import type { NavItem } from '@/types';
@@ -37,6 +38,7 @@ const mainNavItems: NavItem[] = [
     { title: 'Overview', href: home(), icon: LayoutGrid },
     { title: 'Areas of interest', href: regions(), icon: MapPinned },
     { title: 'Unusual periods', href: alerts(), icon: BellRing },
+    { title: 'Ingestion', href: ingestion(), icon: DatabaseZap },
     { title: 'Method', href: method(), icon: BookOpenText },
     { title: 'How it works', href: engineering(), icon: Cpu },
     { title: 'API', href: apiDocs(), icon: Code2 },

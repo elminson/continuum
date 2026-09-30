@@ -21,8 +21,13 @@ return [
     */
 
     'schedule' => [
-        'ingest_public_at' => env('CONTINUUM_INGEST_PUBLIC_AT', '03:00'),
-        'harmonize_at' => env('CONTINUUM_HARMONIZE_AT', '04:30'),
+        // FIRMS refreshes its near-real-time global feeds through the day. Pull
+        // the last 24 h every hour: detections are fingerprinted, so the
+        // overlap between pulls is never counted twice.
+        'ingest_public_cron' => env('CONTINUUM_INGEST_PUBLIC_CRON', '5 * * * *'),
+        'ingest_public_window' => env('CONTINUUM_INGEST_PUBLIC_WINDOW', '24h'),
+        // Fold whatever arrived into the calendars shortly after each pull.
+        'harmonize_cron' => env('CONTINUUM_HARMONIZE_CRON', '25 * * * *'),
     ],
 
     'firms' => [

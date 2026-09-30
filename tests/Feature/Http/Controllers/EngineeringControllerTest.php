@@ -1,7 +1,10 @@
 <?php
 
+use App\Actions\Insights\TriageAlert;
+use App\Ai\Agents\AlertAnalyst;
 use App\Enums\HarmonizationMethod;
 use App\Enums\ReferenceSensor;
+use App\Models\Alert;
 use App\Models\CalibrationFactor;
 use App\Models\IngestRun;
 use App\Models\Region;
@@ -48,4 +51,27 @@ it('features the public area with the longest calibrated overlap', function () {
             ->where('featured.ratio.validation.naive_mae', 65.9)
             ->has('featured.pairs')
             ->has('featured.threshold_curve'));
+});
+
+it('shows the analyst readings, one real reading and the latest benchmark', function () {
+    AlertAnalyst::fake(fn () => ['baseline_reliable' => true, 'artifact_risk' => 0.03, 'cause' => 'outbreak', 'attention' => 'act_now', 'rationale' => 'Seven times the median over 25 years.']);
+    $region = Region::factory()->preset()->create(['name' => 'Gran Chaco']);
+    $read = Alert::factory()->for($region)->create(['z_score' => 9]);
+    Alert::factory()->for($region)->create(['z_score' => 3, 'period_start' => '2024-08-05']);
+    app(TriageAlert::class)($read);
+    $this->artisan('continuum:evaluate-analyst')->assertSuccessful();
+    Cache::flush();
+
+    $this->get(route('engineering'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('ai.alerts', 2)
+            ->where('ai.read', 1)
+            ->where('ai.act_now', 1)
+            ->where('ai.thin_baseline', 0)
+            ->where('ai.example.reading.cause', 'outbreak')
+            ->where('ai.example.region', 'Gran Chaco')
+            ->where('ai.example.state', fn (string $state) => str_contains($state, 'Gran Chaco'))
+            ->where('ai.instructions', fn (string $text) => str_contains($text, 'baseline_reliable'))
+            ->where('ai.evaluation.cases', 10)
+            ->has('ai.evaluation.results', 10));
 });

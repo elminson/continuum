@@ -20,10 +20,13 @@ import {
     ServerCog,
     ShieldCheck,
     Sigma,
+    Sparkles,
     Timer,
     Workflow,
 } from '@lucide/vue';
 import { computed, defineAsyncComponent } from 'vue';
+import AiReader from '@/components/engineering/AiReader.vue';
+import type { AiShowcase } from '@/components/engineering/AiReader.vue';
 import ArchitectureFlow from '@/components/engineering/ArchitectureFlow.vue';
 import type { ArchitectureLayer } from '@/components/engineering/ArchitectureFlow.vue';
 import CountUp from '@/components/engineering/CountUp.vue';
@@ -110,6 +113,7 @@ const props = defineProps<{
         pairs: OverlapPair[];
         threshold_curve: ThresholdPoint[];
     } | null;
+    ai: AiShowcase;
 }>();
 
 defineOptions({
@@ -204,6 +208,14 @@ const stages = computed<PipelineStage[]>(() => [
         metricLabel: 'calendar entries',
     },
     {
+        icon: Sparkles,
+        title: 'Read with AI, as advice',
+        body: `A self-hosted open-weights model reads each flagged period against a written rubric: whether the baseline can be trusted, the likely cause, and whether a person should act. Its answers are schema-checked and benchmarked, and it never changes a number.`,
+        code: 'AlertAnalyst · Laravel AI SDK',
+        metric: formatNumber(props.ai.read),
+        metricLabel: 'periods read by the analyst',
+    },
+    {
         icon: Code2,
         title: 'Serve with a receipt',
         body: 'The same numbers power this site and a public JSON API. Every export carries a method receipt: sensors, versions, factors, uncertainty and the holdout score behind them.',
@@ -266,6 +278,11 @@ const layers: ArchitectureLayer[] = [
                 icon: FlaskConical,
                 title: 'Calibration engine',
                 detail: 'Ratio and FRP threshold transfers, bootstrap intervals, holdout scoring.',
+            },
+            {
+                icon: Sparkles,
+                title: 'Alert analyst',
+                detail: 'Open-weights model via Ollama on our own machine, through Cloudflare Tunnel. Advice only.',
             },
             {
                 icon: BadgeCheck,
@@ -615,6 +632,28 @@ const decisions: {
                     >{{ shortName }} calendar</Link
                 >.
             </p>
+        </section>
+
+        <!-- AI, used for what it is good at -->
+        <section id="ai" class="scroll-mt-20">
+            <div v-reveal class="mb-10 max-w-2xl">
+                <p class="text-sm font-medium text-lime-600 dark:text-lime-400">
+                    Responsible AI
+                </p>
+                <h2
+                    class="mt-2 text-3xl font-semibold tracking-tight md:text-4xl"
+                >
+                    AI that follows a rubric, and gets graded
+                </h2>
+                <p class="mt-4 text-base leading-relaxed text-muted-foreground">
+                    Once the statistics flag a period, an open-weights model we
+                    host reads it like an analyst would: is the baseline
+                    trustworthy, what probably caused it, and does it need a
+                    person now. It answers in a fixed schema and is graded on a
+                    labelled benchmark.
+                </p>
+            </div>
+            <AiReader :ai="ai" />
         </section>
 
         <!-- Architecture -->

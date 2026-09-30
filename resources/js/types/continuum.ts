@@ -145,14 +145,15 @@ export type FireAlert = {
 export type AlertTriage = {
     cause: 'seasonal' | 'outbreak' | 'data_gap' | 'sensor';
     cause_label: string;
-    cause_probability: number | null;
-    probabilities: Record<string, number>;
+    baseline_reliable: boolean | null;
     artifact_probability: number;
-    concern_level: number;
-    concern_label: string | null;
-    concern_score: number;
+    attention: 'no_action' | 'watch' | 'act_now';
+    attention_label: string | null;
+    rationale: string | null;
     model: string;
+    provider: string;
     triaged_at: string;
+    advisory: true;
 };
 
 export type ClimatologyPoint = {

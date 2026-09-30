@@ -2,29 +2,23 @@
 
 namespace App\Actions\Insights;
 
+use App\Ai\Agents\AlertAnalyst;
 use App\Enums\CalendarPeriod;
 use App\Enums\ReferenceSensor;
 use App\Models\Alert;
 use App\Models\AlertTriage;
-use Laravel\Ai\Classification;
-use Laravel\Ai\Classification\Boolean;
-use Laravel\Ai\Classification\Choice;
-use Laravel\Ai\Classification\Score;
-use Laravel\Ai\Responses\Data\BooleanAnswer;
-use Laravel\Ai\Responses\Data\ChoiceAnswer;
-use Laravel\Ai\Responses\Data\ScoreAnswer;
+use Laravel\Ai\Responses\StructuredAgentResponse;
 use UnexpectedValueException;
 
 /**
- * Asks a decision model (Laya, through the Laravel AI SDK) for an advisory
- * reading of one flagged period: its most likely cause, the risk that it is
- * a data artifact, and how much attention it deserves. The statistics decide
- * what is flagged; this only helps a person read it.
+ * Asks the alert analyst (an open-weights model we host, through the Laravel
+ * AI SDK) for an advisory reading of one flagged period. The statistics decide
+ * what is flagged; the reading only helps a person understand it.
  */
 class TriageAlert
 {
-    /** Bump when the questions or the wording of the state change, to re-read every alert. */
-    public const string VERSION = '2026-09-30';
+    /** Bump when the instructions, schema or state wording change, to re-read every alert. */
+    public const string VERSION = '2026-09-30.analyst';
 
     public function state(Alert $alert): string
     {
@@ -36,45 +30,63 @@ class TriageAlert
             CalendarPeriod::Month => $alert->period_start->format('F Y'),
         };
         $scale = $alert->reference === ReferenceSensor::Modis ? 'MODIS-equivalent' : 'VIIRS-equivalent';
-        $multiple = $alert->expected > 0 ? number_format($alert->observed / $alert->expected, 1).' times' : 'far above';
+        $multiple = $alert->expected > 0 ? number_format($alert->observed / $alert->expected, 1).' times the median' : 'far above the median';
 
         return implode(' ', [
             sprintf('Satellite fire record for %s (%s km²), %s.', $alert->region->name, number_format($alert->region->areaKm2()), $label),
             sprintf('Observed: %s %s active 1 km cell-days with fire.', number_format($alert->observed), $scale),
             sprintf('The same %s in %d other years: median %s, robust spread %s.', $alert->period->value, $alert->climatology_years, number_format($alert->expected), number_format($alert->spread)),
-            sprintf('That is %s the median, z-score %s, %s percentile.', $multiple, number_format($alert->z_score, 1), number_format($alert->percentile, 0)),
+            sprintf('That is %s, z-score %s, %s percentile.', $multiple, number_format($alert->z_score, 1), number_format($alert->percentile, 0)),
             sprintf('The historical baseline has %d years of observations for this %s.', $alert->climatology_years, $alert->period->value),
         ]);
     }
 
     public function hash(Alert $alert): string
     {
-        return sha1($this->state($alert).'|'.self::VERSION);
+        return sha1($this->state($alert).'|'.self::VERSION.'|'.$this->model());
+    }
+
+    public function provider(): string
+    {
+        return (string) config('continuum.analyst.provider', 'ollama');
+    }
+
+    public function model(): string
+    {
+        return (string) config('continuum.analyst.model', 'qwen2.5:7b-instruct');
     }
 
     /**
-     * @param  string|list<string>|null  $provider  defaults to ai.default_for_classification (a failover list)
+     * @return array{baseline_reliable: bool, artifact_risk: float, cause: string, attention: string, rationale: string}
      */
-    public function __invoke(Alert $alert, string|array|null $provider = null): AlertTriage
+    public function read(string $state): array
     {
-        $provider ??= config('ai.default_for_classification');
+        $response = (new AlertAnalyst)->prompt($state, provider: $this->provider(), model: $this->model());
 
-        $result = Classification::of($this->state($alert))
-            ->questions([
-                'cause' => new Choice('What most likely explains this unusual fire activity?', AlertTriage::CAUSES),
-                'artifact' => new Boolean('Is this unusual value more likely an artifact of the historical record than a real change in fire activity on the ground?'),
-                'concern' => new Score('How much attention should a land or fire manager give this period?', AlertTriage::CONCERN_LEVELS),
-            ])
-            ->timeout(60)
-            ->classify($provider);
-
-        $cause = $result['cause'];
-        $artifact = $result['artifact'];
-        $concern = $result['concern'];
-
-        if (! $cause instanceof ChoiceAnswer || ! $artifact instanceof BooleanAnswer || ! $concern instanceof ScoreAnswer) {
-            throw new UnexpectedValueException('The decision model returned answers of the wrong type.');
+        if (! $response instanceof StructuredAgentResponse) {
+            throw new UnexpectedValueException('The analyst did not return structured output.');
         }
+
+        $data = $response->toArray();
+        $cause = (string) ($data['cause'] ?? '');
+        $attention = (string) ($data['attention'] ?? '');
+
+        if (! array_key_exists($cause, AlertAnalyst::CAUSES) || ! in_array($attention, AlertTriage::ATTENTION_LEVELS, true)) {
+            throw new UnexpectedValueException('The analyst answered outside its schema.');
+        }
+
+        return [
+            'baseline_reliable' => (bool) ($data['baseline_reliable'] ?? false),
+            'artifact_risk' => max(0.0, min(1.0, (float) ($data['artifact_risk'] ?? 0))),
+            'cause' => $cause,
+            'attention' => $attention,
+            'rationale' => trim(mb_substr((string) ($data['rationale'] ?? ''), 0, 400)),
+        ];
+    }
+
+    public function __invoke(Alert $alert): AlertTriage
+    {
+        $reading = $this->read($this->state($alert));
 
         return AlertTriage::query()->updateOrCreate(
             [
@@ -86,14 +98,16 @@ class TriageAlert
             ],
             [
                 'input_hash' => $this->hash($alert),
-                'cause' => $cause->choice,
-                'cause_probabilities' => array_map(fn ($p) => round((float) $p, 4), $cause->probabilities),
-                'cause_confidence' => $cause->confidence,
-                'artifact_probability' => round($artifact->probability, 4),
-                'concern_score' => round($concern->score, 4),
-                'concern_level' => $concern->level(),
-                'provider' => $result->meta->provider,
-                'model' => (string) $result->meta->model,
+                'baseline_reliable' => $reading['baseline_reliable'],
+                'cause' => $reading['cause'],
+                'cause_probabilities' => null,
+                'cause_confidence' => null,
+                'artifact_probability' => round($reading['artifact_risk'], 4),
+                'concern_score' => null,
+                'concern_level' => (int) array_search($reading['attention'], AlertTriage::ATTENTION_LEVELS, true),
+                'rationale' => $reading['rationale'],
+                'provider' => $this->provider(),
+                'model' => $this->model(),
                 'triaged_at' => now(),
             ],
         );

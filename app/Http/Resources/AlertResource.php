@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Ai\Agents\AlertAnalyst;
 use App\Models\Alert;
 use App\Models\AlertTriage;
 use Illuminate\Http\Request;
@@ -52,15 +53,16 @@ class AlertResource extends JsonResource
 
         return [
             'cause' => $triage->cause,
-            'cause_label' => AlertTriage::CAUSES[$triage->cause] ?? $triage->cause,
-            'cause_probability' => $triage->cause_probabilities[$triage->cause] ?? null,
-            'probabilities' => $triage->cause_probabilities,
+            'cause_label' => AlertAnalyst::CAUSES[$triage->cause] ?? $triage->cause,
+            'baseline_reliable' => $triage->baseline_reliable,
             'artifact_probability' => $triage->artifact_probability,
-            'concern_level' => $triage->concern_level,
-            'concern_label' => AlertTriage::CONCERN_LEVELS[$triage->concern_level] ?? null,
-            'concern_score' => $triage->concern_score,
+            'attention' => $triage->attention(),
+            'attention_label' => AlertAnalyst::ATTENTION[$triage->attention()] ?? null,
+            'rationale' => $triage->rationale,
             'model' => $triage->model,
+            'provider' => $triage->provider,
             'triaged_at' => $triage->triaged_at->toIso8601String(),
+            'advisory' => true,
         ];
     }
 }

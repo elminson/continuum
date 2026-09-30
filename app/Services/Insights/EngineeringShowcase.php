@@ -2,9 +2,15 @@
 
 namespace App\Services\Insights;
 
+use App\Actions\Insights\TriageAlert;
+use App\Ai\Agents\AlertAnalyst;
+use App\Ai\Evals\AlertAnalystBenchmark;
 use App\Enums\HarmonizationMethod;
 use App\Enums\IngestStatus;
 use App\Enums\ReferenceSensor;
+use App\Models\AiEvaluation;
+use App\Models\Alert;
+use App\Models\AlertTriage;
 use App\Models\CalibrationFactor;
 use App\Models\Region;
 use App\Services\Firms\AreaApiClient;
@@ -24,6 +30,7 @@ class EngineeringShowcase
     public function __construct(
         private readonly RegionSummary $summary,
         private readonly OverlapAnalysis $analysis,
+        private readonly TriageAlert $triage,
     ) {}
 
     /**
@@ -93,6 +100,90 @@ class EngineeringShowcase
                 'thresholds' => config('continuum.anomalies.thresholds'),
             ],
             'featured' => $this->featured(),
+            'ai' => $this->ai(),
+        ];
+    }
+
+    /**
+     * The advisory AI layer: what the alert analyst has read, one real reading
+     * exactly as it went in and came out, and its latest benchmark score.
+     *
+     * @return array<string, mixed>
+     */
+    private function ai(): array
+    {
+        $alerts = Alert::query()->with('region')->get();
+        AlertTriage::attachTo($alerts);
+
+        $byCause = [];
+        $actNow = 0;
+        $thin = 0;
+        $read = 0;
+        $lastReadAt = null;
+        $example = null;
+
+        foreach ($alerts as $alert) {
+            $triage = $alert->triage;
+
+            if (! $triage instanceof AlertTriage) {
+                continue;
+            }
+
+            $read++;
+            $byCause[$triage->cause] = ($byCause[$triage->cause] ?? 0) + 1;
+            $actNow += $triage->attention() === 'act_now' ? 1 : 0;
+            $thin += $triage->baseline_reliable === false ? 1 : 0;
+            $lastReadAt = $lastReadAt === null || $triage->triaged_at->gt($lastReadAt) ? $triage->triaged_at : $lastReadAt;
+
+            // Prefer a public area, then the strongest reliable departure.
+            $rank = [$alert->region->is_preset ? 1 : 0, $triage->baseline_reliable ? 1 : 0, $triage->concern_level, $alert->z_score];
+
+            if ($example === null || $rank > $example['rank']) {
+                $example = ['rank' => $rank, 'alert' => $alert, 'triage' => $triage];
+            }
+        }
+
+        $evaluation = AiEvaluation::latestFor(AlertAnalystBenchmark::SUITE);
+
+        return [
+            'model' => $this->triage->model(),
+            'provider' => $this->triage->provider(),
+            'instructions' => trim((string) (new AlertAnalyst)->instructions()),
+            'causes' => AlertAnalyst::CAUSES,
+            'attention' => AlertAnalyst::ATTENTION,
+            'alerts' => $alerts->count(),
+            'read' => $read,
+            'act_now' => $actNow,
+            'thin_baseline' => $thin,
+            'by_cause' => $byCause,
+            'last_read_at' => $lastReadAt?->toIso8601String(),
+            'example' => $example === null ? null : [
+                'region' => $example['alert']->region->name,
+                'region_slug' => $example['alert']->region->slug,
+                'message' => $example['alert']->message,
+                'state' => $this->triage->state($example['alert']),
+                'reading' => [
+                    'baseline_reliable' => $example['triage']->baseline_reliable,
+                    'artifact_risk' => $example['triage']->artifact_probability,
+                    'cause' => $example['triage']->cause,
+                    'attention' => $example['triage']->attention(),
+                    'rationale' => $example['triage']->rationale,
+                ],
+                'triaged_at' => $example['triage']->triaged_at->toIso8601String(),
+            ],
+            'evaluation' => $evaluation === null ? null : [
+                'model' => $evaluation->model,
+                'cases' => $evaluation->cases,
+                'scores' => $evaluation->scores,
+                'ran_at' => $evaluation->ran_at->toIso8601String(),
+                'results' => array_map(fn (array $result) => [
+                    'name' => $result['name'],
+                    'want' => $result['want'],
+                    'got' => $result['got'] === null ? null : array_intersect_key($result['got'], array_flip(['baseline_reliable', 'cause', 'attention'])),
+                    'checks' => $result['checks'],
+                    'passed' => $result['passed'],
+                ], $evaluation->results),
+            ],
         ];
     }
 

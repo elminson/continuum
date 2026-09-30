@@ -20,6 +20,19 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Alert analyst (advisory AI reading of flagged periods)
+    |--------------------------------------------------------------------------
+    */
+
+    'analyst' => [
+        'provider' => env('ALERT_ANALYST_PROVIDER', 'ollama'),
+        'model' => env('ALERT_ANALYST_MODEL', 'qwen2.5:7b-instruct'),
+        // Readings per scheduled run; each takes about five seconds.
+        'batch' => (int) env('ALERT_ANALYST_BATCH', 60),
+    ],
+
     'schedule' => [
         // FIRMS refreshes its near-real-time global feeds through the day. Pull
         // the last 24 h every hour: detections are fingerprinted, so the
@@ -28,7 +41,7 @@ return [
         'ingest_public_window' => env('CONTINUUM_INGEST_PUBLIC_WINDOW', '24h'),
         // Fold whatever arrived into the calendars shortly after each pull.
         'harmonize_cron' => env('CONTINUUM_HARMONIZE_CRON', '25 * * * *'),
-        // Ask Laya to read new or changed unusual periods after each harmonization.
+        // Ask the alert analyst to read new or changed unusual periods after each harmonization.
         'triage_cron' => env('CONTINUUM_TRIAGE_CRON', '50 * * * *'),
     ],
 

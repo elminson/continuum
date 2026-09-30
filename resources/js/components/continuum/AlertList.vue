@@ -10,8 +10,8 @@ defineProps<{ alerts: FireAlert[]; showRegion?: boolean }>();
 
 const CAUSE_SHORT: Record<string, string> = {
     seasonal: 'a stronger usual season',
-    outbreak: 'an outbreak on the ground',
-    data_gap: 'a gap in the historical record',
+    outbreak: 'an exceptional outbreak',
+    data_gap: 'too little history to judge',
     sensor: 'a change of satellite coverage',
 };
 </script>
@@ -43,48 +43,53 @@ const CAUSE_SHORT: Record<string, string> = {
                     {{ formatNumber(alert.spread) }} · {{ alert.method }} /
                     {{ alert.reference }}-equivalent
                 </p>
-                <p
+                <div
                     v-if="alert.triage"
-                    class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs"
-                    :title="`Advisory reading by ${alert.triage.model} (Laya), not part of the statistics. ${alert.triage.cause_label}`"
+                    class="mt-2 rounded-lg border border-lime-500/25 bg-lime-500/5 px-3 py-2 text-xs"
                 >
-                    <span
-                        class="inline-flex items-center gap-1 rounded-md border border-lime-500/30 bg-lime-500/10 px-1.5 py-0.5 font-medium text-lime-700 dark:text-lime-400"
-                    >
-                        <Sparkles class="size-3" /> Laya
-                    </span>
-                    <span>
-                        Likely
-                        <span class="font-medium">{{
-                            CAUSE_SHORT[alert.triage.cause] ??
-                            alert.triage.cause
-                        }}</span>
+                    <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span
-                            v-if="alert.triage.cause_probability !== null"
-                            class="text-muted-foreground"
+                            class="inline-flex items-center gap-1 font-medium text-lime-700 dark:text-lime-400"
+                            :title="`Advisory reading by ${alert.triage.model}, a self-hosted model. It never changes the statistics.`"
                         >
-                            ({{
-                                formatPercent(alert.triage.cause_probability)
-                            }})</span
+                            <Sparkles class="size-3" /> AI reading
+                        </span>
+                        <span>
+                            Likely
+                            <span class="font-medium">{{
+                                CAUSE_SHORT[alert.triage.cause] ??
+                                alert.triage.cause
+                            }}</span>
+                        </span>
+                        <span
+                            :class="
+                                alert.triage.attention === 'act_now'
+                                    ? 'font-medium text-red-600 dark:text-red-400'
+                                    : 'text-muted-foreground'
+                            "
+                            >{{ alert.triage.attention_label }}</span
                         >
-                    </span>
-                    <span
-                        :class="
-                            alert.triage.artifact_probability >= 0.5
-                                ? 'text-amber-600 dark:text-amber-400'
-                                : 'text-muted-foreground'
-                        "
+                        <span
+                            v-if="alert.triage.baseline_reliable === false"
+                            class="text-amber-600 dark:text-amber-400"
+                            >Thin baseline</span
+                        >
+                        <span
+                            v-else-if="alert.triage.artifact_probability >= 0.5"
+                            class="text-amber-600 dark:text-amber-400"
+                            >Artifact risk
+                            {{
+                                formatPercent(alert.triage.artifact_probability)
+                            }}</span
+                        >
+                    </p>
+                    <p
+                        v-if="alert.triage.rationale"
+                        class="mt-1 text-muted-foreground"
                     >
-                        Artifact risk
-                        {{ formatPercent(alert.triage.artifact_probability) }}
-                    </span>
-                    <span
-                        v-if="alert.triage.concern_label"
-                        class="text-muted-foreground"
-                    >
-                        {{ alert.triage.concern_label }}
-                    </span>
-                </p>
+                        {{ alert.triage.rationale }}
+                    </p>
+                </div>
             </div>
         </li>
     </ul>

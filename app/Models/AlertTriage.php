@@ -15,10 +15,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $reference
  * @property string $input_hash
  * @property string $cause
- * @property array<string, float> $cause_probabilities
+ * @property array<string, float>|null $cause_probabilities
+ * @property bool|null $baseline_reliable
+ * @property string|null $rationale
  * @property float|null $cause_confidence
  * @property float $artifact_probability
- * @property float $concern_score
+ * @property float|null $concern_score
  * @property int $concern_level
  * @property string $provider
  * @property string $model
@@ -26,14 +28,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class AlertTriage extends Model
 {
-    public const array CAUSES = [
-        'seasonal' => 'The usual burning season for this place, only stronger than typical.',
-        'outbreak' => 'An exceptional outbreak on the ground, such as drought, heat or land clearing.',
-        'data_gap' => 'A gap or change in the historical record rather than a change on the ground.',
-        'sensor' => 'A change in which satellites or sensors observed the area.',
-    ];
-
-    public const array CONCERN_LEVELS = ['No action needed', 'Keep watching', 'Act now'];
+    /** Attention levels in order; stored as their index in concern_level. */
+    public const array ATTENTION_LEVELS = ['no_action', 'watch', 'act_now'];
 
     protected $fillable = [
         'region_id',
@@ -42,12 +38,14 @@ class AlertTriage extends Model
         'method',
         'reference',
         'input_hash',
+        'baseline_reliable',
         'cause',
         'cause_probabilities',
         'cause_confidence',
         'artifact_probability',
         'concern_score',
         'concern_level',
+        'rationale',
         'provider',
         'model',
         'triaged_at',
@@ -58,12 +56,18 @@ class AlertTriage extends Model
         return [
             'period_start' => 'immutable_date',
             'cause_probabilities' => 'array',
+            'baseline_reliable' => 'boolean',
             'cause_confidence' => 'float',
             'artifact_probability' => 'float',
             'concern_score' => 'float',
             'concern_level' => 'integer',
             'triaged_at' => 'immutable_datetime',
         ];
+    }
+
+    public function attention(): string
+    {
+        return self::ATTENTION_LEVELS[$this->concern_level] ?? 'watch';
     }
 
     /**

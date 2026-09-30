@@ -19,8 +19,7 @@ return [
     'default_for_transcription' => 'openai',
     'default_for_embeddings' => 'openai',
     'default_for_reranking' => 'cohere',
-    // Tried in order: Laya through its Cloudflare Tunnel, then through the SSH tunnel.
-    'default_for_classification' => array_values(array_filter(array_map('trim', explode(',', (string) env('AI_CLASSIFICATION_PROVIDERS', 'laya,laya-tunnel'))))),
+    'default_for_classification' => 'typesafe',
 
     /*
     |--------------------------------------------------------------------------
@@ -122,6 +121,9 @@ return [
             'key' => env('MISTRAL_API_KEY'),
         ],
 
+        // Open-weights models we host ourselves. In production OLLAMA_URL is a
+        // Cloudflare Tunnel to the analysis machine, behind a bearer-token gate
+        // (OLLAMA_API_KEY) that only forwards POST /api/chat and GET /api/tags.
         'ollama' => [
             'driver' => 'ollama',
             'key' => env('OLLAMA_API_KEY', ''),
@@ -149,33 +151,6 @@ return [
         'typesafe' => [
             'driver' => 'typesafe',
             'key' => env('TYPESAFE_API_KEY'),
-        ],
-
-        // Laya, the open decision model, served by ollaya on another machine.
-        // It speaks TypeSafe's /v1/systemone protocol, so the TypeSafe driver
-        // talks to it unchanged: no per-call cost. The public endpoint is a
-        // Cloudflare Tunnel behind a bearer-token gate; the SSH reverse tunnel
-        // on 127.0.0.1:11435 is the fallback.
-        'laya' => [
-            'driver' => 'typesafe',
-            'key' => env('LAYA_API_KEY', 'local'),
-            'url' => env('LAYA_URL', 'https://laya.ai-img.art/v1'),
-            'models' => [
-                'classification' => [
-                    'default' => env('LAYA_MODEL', 'laya:en'),
-                ],
-            ],
-        ],
-
-        'laya-tunnel' => [
-            'driver' => 'typesafe',
-            'key' => env('LAYA_API_KEY', 'local'),
-            'url' => env('LAYA_TUNNEL_URL', 'http://127.0.0.1:11435/v1'),
-            'models' => [
-                'classification' => [
-                    'default' => env('LAYA_MODEL', 'laya:en'),
-                ],
-            ],
         ],
 
         'voyageai' => [

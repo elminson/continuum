@@ -7,6 +7,13 @@ import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig, lazyPlugins } from 'vite-plus';
 
 export default defineConfig({
+    build: {
+        // Production builds run in place on the server. Never wipe public/build
+        // first: the live site would 500 ("Vite manifest not found") for the
+        // whole build. Hashed files from older builds are simply left behind,
+        // which also keeps pages that are already open working.
+        emptyOutDir: false,
+    },
     plugins: lazyPlugins(() => [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],

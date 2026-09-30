@@ -21,3 +21,10 @@ Schedule::command('continuum:harmonize')
     ->timezone('UTC')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Dashboard aggregates scan millions of cell-days; keep them precomputed.
+Schedule::command('continuum:warm-cache')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground();

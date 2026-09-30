@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Actions\Harmonization\RefreshRegion;
 use App\Models\Region;
+use App\Services\Insights\RegionSummary;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -23,8 +24,10 @@ class HarmonizeRegionJob implements ShouldBeUnique, ShouldQueue
         return (string) $this->regionId;
     }
 
-    public function handle(RefreshRegion $refresh): void
+    public function handle(RefreshRegion $refresh, RegionSummary $summary): void
     {
         $refresh(Region::query()->findOrFail($this->regionId), $this->aggregate);
+
+        $summary->refreshGlobal();
     }
 }

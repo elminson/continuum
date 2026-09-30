@@ -11,6 +11,7 @@ use App\Models\Region;
 use App\Support\Geo\BoundingBox;
 use Carbon\CarbonImmutable;
 use Illuminate\Bus\Batch;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -60,21 +61,70 @@ class BackfillPlanner
     }
 
     /**
+     * The "SOURCE|from|days" key of every window windows() would plan, without
+     * building job objects: the intake panel counts thousands of these per poll.
+     *
+     * @param  list<FirmsSource>  $sources
+     * @return list<string>
+     */
+    public function windowKeys(array $sources, ?string $from = null, ?string $to = null): array
+    {
+        $end = CarbonImmutable::parse($to ?? CarbonImmutable::yesterday()->toDateString());
+        $keys = [];
+
+        foreach ($sources as $source) {
+            $start = CarbonImmutable::parse($from ?? $source->earliestDate());
+
+            for ($cursor = $start; $cursor->lte($end); $cursor = $cursor->addDays(AreaApiClient::MAX_DAYS)) {
+                $days = min(AreaApiClient::MAX_DAYS, (int) $cursor->diffInDays($end) + 1);
+                $keys[] = $source->value.'|'.$cursor->toDateString().'|'.$days;
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * How many of a region's full-history windows are still to fetch.
+     *
+     * @param  array<string, true>|null  $covered  precomputed coverage() for the region's box
+     * @return array{total: int, done: int}
+     */
+    public function historyProgress(Region $region, ?array $covered = null): array
+    {
+        $yesterday = CarbonImmutable::yesterday();
+        $tailStart = $yesterday->subDays((int) config('continuum.firms.nrt_tail_days', 70));
+        $covered ??= $this->coverage($region->bbox());
+
+        $keys = [
+            ...$this->windowKeys(FirmsSource::nrtSources(), $tailStart->toDateString(), $yesterday->toDateString()),
+            ...$this->windowKeys(FirmsSource::archiveSources(), null, $yesterday->toDateString()),
+        ];
+
+        $done = 0;
+
+        foreach ($keys as $key) {
+            if (isset($covered[$key])) {
+                $done++;
+            }
+        }
+
+        return ['total' => count($keys), 'done' => $done];
+    }
+
+    /**
      * Windows already fetched for a box that fully contains the given one,
      * keyed "SOURCE|from|days". FIRMS charges per day requested, not per
      * area, so any earlier fetch of a larger box makes the window free.
      *
+     * @param  Collection<int, IngestRun>|null  $runs  preloaded completedAreaRuns()
      * @return array<string, true>
      */
-    public function coverage(BoundingBox $box): array
+    public function coverage(BoundingBox $box, ?Collection $runs = null): array
     {
         $covered = [];
 
-        $runs = IngestRun::query()
-            ->where('source', 'like', 'area:%')
-            ->where('status', IngestStatus::Completed->value)
-            ->whereNotNull('meta->bbox')
-            ->get(['source', 'meta']);
+        $runs ??= $this->completedAreaRuns();
 
         foreach ($runs as $run) {
             $meta = $run->meta ?? [];
@@ -95,6 +145,20 @@ class BackfillPlanner
         }
 
         return $covered;
+    }
+
+    /**
+     * Completed Area API runs with the box they fetched, for coverage().
+     *
+     * @return Collection<int, IngestRun>
+     */
+    public function completedAreaRuns(): Collection
+    {
+        return IngestRun::query()
+            ->where('source', 'like', 'area:%')
+            ->where('status', IngestStatus::Completed->value)
+            ->whereNotNull('meta->bbox')
+            ->get(['source', 'meta']);
     }
 
     /**

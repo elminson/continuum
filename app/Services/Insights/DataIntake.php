@@ -10,6 +10,8 @@ use App\Models\IngestRun;
 use App\Models\Region;
 use App\Services\Firms\BackfillPlanner;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\Repository;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -19,9 +21,14 @@ use Illuminate\Support\Facades\Cache;
  */
 class DataIntake
 {
+    public const string CACHE_KEY = 'continuum.data-intake';
+
     public const int CACHE_SECONDS = 15;
 
     public const int RECENT_RUNS = 10;
+
+    /** @var Collection<int, IngestRun>|null */
+    private ?Collection $areaRuns = null;
 
     public function __construct(private readonly BackfillPlanner $planner) {}
 
@@ -30,7 +37,17 @@ class DataIntake
      */
     public function forPresets(): array
     {
-        return Cache::remember('continuum.data-intake', now()->addSeconds(self::CACHE_SECONDS), fn (): array => $this->build());
+        // Polled every 20 s by every open dashboard: serve the cached copy and
+        // refresh it after the response once it is older than CACHE_SECONDS.
+        return Cache::flexible(self::CACHE_KEY, [self::CACHE_SECONDS, 3600], fn (): array => $this->build());
+    }
+
+    public function refresh(): void
+    {
+        Cache::putMany([
+            self::CACHE_KEY => $this->build(),
+            Repository::FLEXIBLE_CREATED_KEY_PREFIX.self::CACHE_KEY => now()->getTimestamp(),
+        ], 3600);
     }
 
     /**
@@ -39,6 +56,7 @@ class DataIntake
     public function build(): array
     {
         $regions = Region::query()->preset()->orderBy('name')->get();
+        $this->areaRuns = $this->planner->completedAreaRuns();
         /** @var list<int> $regionIds */
         $regionIds = $regions->pluck('id')->values()->all();
 
@@ -149,19 +167,12 @@ class DataIntake
      */
     private function history(Region $region): array
     {
-        $yesterday = CarbonImmutable::yesterday();
-        $tailStart = $yesterday->subDays((int) config('continuum.firms.nrt_tail_days', 70));
-
-        $total = count($this->planner->windows($region, FirmsSource::nrtSources(), $tailStart->toDateString(), $yesterday->toDateString(), skipCovered: false))
-            + count($this->planner->windows($region, FirmsSource::archiveSources(), null, $yesterday->toDateString(), skipCovered: false));
-
-        $remaining = count($this->planner->fullHistory($region));
-        $done = max(0, $total - $remaining);
+        $progress = $this->planner->historyProgress($region, $this->planner->coverage($region->bbox(), $this->areaRuns));
 
         return [
-            'windows_total' => $total,
-            'windows_done' => $done,
-            'percent' => $total > 0 ? round(100 * $done / $total, 1) : 0.0,
+            'windows_total' => $progress['total'],
+            'windows_done' => $progress['done'],
+            'percent' => $progress['total'] > 0 ? round(100 * $progress['done'] / $progress['total'], 1) : 0.0,
             'earliest_possible' => $this->earliestPossible(),
         ];
     }

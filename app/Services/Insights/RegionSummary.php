@@ -11,6 +11,7 @@ use App\Models\CalendarEntry;
 use App\Models\CalibrationFactor;
 use App\Models\Region;
 use App\Services\Harmonization\HarmonizedCalendar;
+use Illuminate\Cache\Repository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -20,12 +21,37 @@ use Illuminate\Support\Facades\DB;
  */
 class RegionSummary
 {
+    public const string GLOBAL_KEY = 'continuum.global-summary';
+
+    /** Seconds the global summary is served as fresh, then stale while it refreshes in the background. */
+    public const int GLOBAL_FRESH_SECONDS = 600;
+
+    public const int GLOBAL_STALE_SECONDS = 86400;
+
+    public const int REGION_TTL_MINUTES = 30;
+
     public function __construct(private readonly HarmonizedCalendar $calendar) {}
 
     /**
      * @return array<string, mixed>
      */
     public function for(Region $region): array
+    {
+        // Everything below only changes when the region is re-harmonized, which
+        // stamps harmonized_at, so that timestamp versions the cache entry.
+        $version = $region->harmonized_at?->getTimestamp() ?? 0;
+
+        return Cache::remember(
+            "continuum.region-summary.{$region->id}.{$version}",
+            now()->addMinutes(self::REGION_TTL_MINUTES),
+            fn (): array => $this->build($region),
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function build(Region $region): array
     {
         $daily = CalendarEntry::query()
             ->where('region_id', $region->id)
@@ -89,35 +115,65 @@ class RegionSummary
      */
     public function global(): array
     {
-        return Cache::remember('continuum.global-summary', now()->addMinutes(10), function (): array {
-            $range = DB::table('cell_days')->selectRaw('min(acq_date) as first_date, max(acq_date) as last_date, count(distinct acq_date) as days')->first();
-            $perInstrument = DB::table('cell_days')
-                ->selectRaw('instrument, count(*) as cell_days, sum(detections) as detections, count(distinct satellite) as satellites')
-                ->groupBy('instrument')
-                ->get()
-                ->keyBy('instrument');
+        // Scanning every cell-day takes seconds once the archive is backfilled,
+        // so visitors always get the cached figures; a stale copy is refreshed
+        // after the response is sent, and continuum:warm-cache keeps it warm.
+        return Cache::flexible(
+            self::GLOBAL_KEY,
+            [self::GLOBAL_FRESH_SECONDS, self::GLOBAL_STALE_SECONDS],
+            fn (): array => $this->buildGlobal(),
+        );
+    }
+
+    public function refreshGlobal(): void
+    {
+        Cache::putMany([
+            self::GLOBAL_KEY => $this->buildGlobal(),
+            Repository::FLEXIBLE_CREATED_KEY_PREFIX.self::GLOBAL_KEY => now()->getTimestamp(),
+        ], self::GLOBAL_STALE_SECONDS);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function buildGlobal(): array
+    {
+        // min/max come straight off the acq_date index; the distinct-day count
+        // and per-sensor totals use hash aggregates instead of count(distinct),
+        // which would sort millions of rows on disk.
+        $range = DB::table('cell_days')->selectRaw('min(acq_date) as first_date, max(acq_date) as last_date')->first();
+        $days = (int) DB::query()->fromSub(DB::table('cell_days')->select('acq_date')->groupBy('acq_date'), 'days')->count();
+
+        $perSatellite = DB::table('cell_days')
+            ->selectRaw('instrument, satellite, count(*) as cell_days, sum(detections) as detections')
+            ->groupBy('instrument', 'satellite')
+            ->get();
+
+        $instrument = function (string $name) use ($perSatellite): array {
+            $rows = $perSatellite->where('instrument', $name);
 
             return [
-                'first_date' => isset($range->first_date) ? substr((string) $range->first_date, 0, 10) : null,
-                'last_date' => isset($range->last_date) ? substr((string) $range->last_date, 0, 10) : null,
-                'days' => (int) ($range->days ?? 0),
-                'detections' => (int) $perInstrument->sum('detections'),
-                'cell_days' => (int) $perInstrument->sum('cell_days'),
-                'modis' => [
-                    'detections' => (int) ($perInstrument->get('modis')->detections ?? 0),
-                    'cell_days' => (int) ($perInstrument->get('modis')->cell_days ?? 0),
-                    'satellites' => (int) ($perInstrument->get('modis')->satellites ?? 0),
-                ],
-                'viirs' => [
-                    'detections' => (int) ($perInstrument->get('viirs')->detections ?? 0),
-                    'cell_days' => (int) ($perInstrument->get('viirs')->cell_days ?? 0),
-                    'satellites' => (int) ($perInstrument->get('viirs')->satellites ?? 0),
-                ],
-                'regions' => Region::query()->count(),
-                'calibrated_regions' => CalibrationFactor::query()->distinct('region_id')->count('region_id'),
-                'alerts' => Alert::query()->count(),
+                'detections' => (int) $rows->sum('detections'),
+                'cell_days' => (int) $rows->sum('cell_days'),
+                'satellites' => $rows->count(),
             ];
-        });
+        };
+
+        $modis = $instrument('modis');
+        $viirs = $instrument('viirs');
+
+        return [
+            'first_date' => isset($range->first_date) ? substr((string) $range->first_date, 0, 10) : null,
+            'last_date' => isset($range->last_date) ? substr((string) $range->last_date, 0, 10) : null,
+            'days' => $days,
+            'detections' => $modis['detections'] + $viirs['detections'],
+            'cell_days' => $modis['cell_days'] + $viirs['cell_days'],
+            'modis' => $modis,
+            'viirs' => $viirs,
+            'regions' => Region::query()->count(),
+            'calibrated_regions' => CalibrationFactor::query()->distinct('region_id')->count('region_id'),
+            'alerts' => Alert::query()->count(),
+        ];
     }
 
     /**

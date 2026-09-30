@@ -75,3 +75,57 @@ export const INSTRUMENT_COLORS = {
     harmonized: '#a3e635',
     naive: '#f43f5e',
 } as const;
+
+export function formatDateTime(value: string | null | undefined): string {
+    if (!value) {
+        return '—';
+    }
+
+    return new Date(value).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC',
+        timeZoneName: 'short',
+    });
+}
+
+export function formatRelative(
+    value: string | null | undefined,
+    now: Date = new Date(),
+): string {
+    if (!value) {
+        return '—';
+    }
+
+    const diff = (new Date(value).getTime() - now.getTime()) / 1000;
+    const abs = Math.abs(diff);
+    const units: [number, Intl.RelativeTimeFormatUnit][] = [
+        [60, 'second'],
+        [3600, 'minute'],
+        [86400, 'hour'],
+        [604800, 'day'],
+        [2629800, 'week'],
+        [31557600, 'month'],
+    ];
+
+    if (abs < 45) {
+        return 'just now';
+    }
+
+    const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+    for (let index = 0; index < units.length; index++) {
+        const [limit, unit] = units[index];
+
+        if (abs < limit) {
+            const divisor = index === 0 ? 1 : units[index - 1][0];
+
+            return formatter.format(Math.round(diff / divisor), unit);
+        }
+    }
+
+    return formatter.format(Math.round(diff / 31557600), 'year');
+}

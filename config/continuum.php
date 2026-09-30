@@ -14,6 +14,17 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Daily schedule (UTC, HH:MM)
+    |--------------------------------------------------------------------------
+    */
+
+    'schedule' => [
+        'ingest_public_at' => env('CONTINUUM_INGEST_PUBLIC_AT', '03:00'),
+        'harmonize_at' => env('CONTINUUM_HARMONIZE_AT', '04:30'),
+    ],
+
     'firms' => [
         'base_url' => env('FIRMS_BASE_URL', 'https://firms.modaps.eosdis.nasa.gov'),
         'map_key' => env('FIRMS_MAP_KEY'),

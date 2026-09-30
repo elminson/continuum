@@ -11,13 +11,13 @@ DevCommands::except('queue');
 DevCommands::artisan('queue:listen --queue='.BackfillPlanner::PRIORITY_QUEUE.',default --tries=1 --timeout=0', 'worker');
 
 Schedule::command('firms:ingest-public --window=48h --presets')
-    ->dailyAt('03:00')
+    ->dailyAt((string) config('continuum.schedule.ingest_public_at', '03:00'))
     ->timezone('UTC')
     ->withoutOverlapping()
     ->onOneServer();
 
 Schedule::command('continuum:harmonize')
-    ->dailyAt('04:30')
+    ->dailyAt((string) config('continuum.schedule.harmonize_at', '04:30'))
     ->timezone('UTC')
     ->withoutOverlapping()
     ->onOneServer();

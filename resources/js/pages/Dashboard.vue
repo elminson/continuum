@@ -1,24 +1,34 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Deferred, Head, Link, usePoll } from '@inertiajs/vue3';
 import { ArrowRight, BookOpenText, Code2, Flame, Plus } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import AlertList from '@/components/continuum/AlertList.vue';
+import DataIntakePanel from '@/components/continuum/DataIntakePanel.vue';
 import FireMap from '@/components/continuum/FireMap.vue';
 import InstrumentDot from '@/components/continuum/InstrumentDot.vue';
 import KpiTile from '@/components/continuum/KpiTile.vue';
 import RegionCard from '@/components/continuum/RegionCard.vue';
 import SectionCard from '@/components/continuum/SectionCard.vue';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { formatCompact, formatDate, formatNumber } from '@/lib/format';
 import { apiDocs, home, method } from '@/routes';
 import { create, show } from '@/routes/regions';
-import type { FireAlert, GlobalSummary, Region } from '@/types/continuum';
+import type {
+    DataIntake,
+    FireAlert,
+    GlobalSummary,
+    Region,
+} from '@/types/continuum';
 
 const props = defineProps<{
     global: GlobalSummary;
     regions: Region[];
     alerts: FireAlert[];
+    intake?: DataIntake;
 }>();
+
+usePoll(20_000, { only: ['intake'] }, { keepAlive: true });
 
 defineOptions({
     layout: { breadcrumbs: [{ title: 'Overview', href: home() }] },
@@ -215,6 +225,27 @@ const cellRatio = computed(() =>
                     :region="region"
                 />
             </div>
+        </SectionCard>
+
+        <SectionCard
+            title="Data intake"
+            description="How much NASA FIRMS data the public areas have pulled, and what is still arriving"
+        >
+            <Deferred data="intake">
+                <template #fallback>
+                    <div class="space-y-3">
+                        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            <Skeleton
+                                v-for="index in 4"
+                                :key="index"
+                                class="h-20 rounded-lg"
+                            />
+                        </div>
+                        <Skeleton class="h-40 rounded-lg" />
+                    </div>
+                </template>
+                <DataIntakePanel v-if="intake" :intake="intake" />
+            </Deferred>
         </SectionCard>
     </div>
 </template>

@@ -283,3 +283,97 @@ export type Paginated<T> = {
         links: PaginationLink[];
     };
 };
+
+export type IngestStatus = 'running' | 'completed' | 'failed';
+
+export type IntakeInstrumentRows = { modis: number; viirs: number };
+
+export type IntakeRunCounts = {
+    completed: number;
+    failed: number;
+    running: number;
+};
+
+export type IntakeBackfill = {
+    id: string;
+    total: number;
+    done: number;
+    failed: number;
+    started_at: string;
+    percent: number;
+};
+
+export type IntakeArea = {
+    id: number;
+    slug: string;
+    name: string;
+    color: string;
+    area_km2: number;
+    rows_read: number;
+    rows_inserted: number;
+    rows_skipped: number;
+    by_instrument: IntakeInstrumentRows;
+    runs: IntakeRunCounts;
+    first_date: string | null;
+    last_date: string | null;
+    last_run_at: string | null;
+    last_finished_at: string | null;
+    last_error: string | null;
+    harmonized_at: string | null;
+    history: {
+        windows_total: number;
+        windows_done: number;
+        percent: number;
+        earliest_possible: string;
+    };
+    backfill: IntakeBackfill | null;
+    links: { web: string };
+};
+
+export type IntakeRun = {
+    id: number;
+    source: string;
+    label: string;
+    instrument: Instrument | null;
+    region: { slug: string; name: string; color: string } | null;
+    status: IngestStatus;
+    rows_read: number;
+    rows_inserted: number;
+    rows_skipped: number;
+    date_from: string | null;
+    date_to: string | null;
+    started_at: string;
+    finished_at: string | null;
+    duration_s: number | null;
+    error: string | null;
+};
+
+export type DataIntake = {
+    generated_at: string;
+    totals: {
+        areas: number;
+        rows_inserted: number;
+        modis_rows: number;
+        viirs_rows: number;
+        active_backfills: number;
+        running_runs: number;
+        failed_runs: number;
+        history_percent: number;
+        last_activity_at: string | null;
+    };
+    public_feed: {
+        rows_inserted: number;
+        by_instrument: IntakeInstrumentRows;
+        runs: IntakeRunCounts;
+        last_run_at: string | null;
+        next_run_at: string | null;
+        latest: {
+            feed: string;
+            status: IngestStatus;
+            rows_inserted: number;
+            started_at: string;
+        }[];
+    };
+    areas: IntakeArea[];
+    recent_runs: IntakeRun[];
+};

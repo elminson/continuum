@@ -4,6 +4,7 @@ import {
     BellRing,
     BookOpenText,
     Code2,
+    Cpu,
     FolderGit2,
     Globe2,
     LayoutGrid,
@@ -24,7 +25,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { apiDocs, home, login, method } from '@/routes';
+import { apiDocs, engineering, home, login, method } from '@/routes';
 import { index as alerts } from '@/routes/alerts';
 import { index as regions } from '@/routes/regions';
 import type { NavItem } from '@/types';
@@ -37,6 +38,7 @@ const mainNavItems: NavItem[] = [
     { title: 'Areas of interest', href: regions(), icon: MapPinned },
     { title: 'Unusual periods', href: alerts(), icon: BellRing },
     { title: 'Method', href: method(), icon: BookOpenText },
+    { title: 'How it works', href: engineering(), icon: Cpu },
     { title: 'API', href: apiDocs(), icon: Code2 },
 ];
 

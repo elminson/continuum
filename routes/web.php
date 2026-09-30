@@ -4,6 +4,7 @@ use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ApiDocsController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EngineeringController;
 use App\Http\Controllers\LabController;
 use App\Http\Controllers\MethodController;
 use App\Http\Controllers\RegionController;
@@ -18,6 +19,7 @@ Route::get('regions/{region}/lab', LabController::class)->name('regions.lab');
 
 Route::get('alerts', AlertController::class)->name('alerts.index');
 Route::get('method', MethodController::class)->name('method');
+Route::get('how-it-works', EngineeringController::class)->name('engineering');
 Route::get('api-docs', ApiDocsController::class)->name('api-docs');
 
 Route::middleware('auth')->group(function () {

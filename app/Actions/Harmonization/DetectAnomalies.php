@@ -20,6 +20,9 @@ use Illuminate\Support\Facades\DB;
  */
 class DetectAnomalies
 {
+    /** Share of a period's days that must have been observed for it to count. */
+    public const float MIN_COVERAGE = 0.5;
+
     public function __construct(private readonly HarmonizedCalendar $calendar) {}
 
     /**
@@ -37,7 +40,7 @@ class DetectAnomalies
         $byIndex = [];
 
         foreach ($series['points'] as $point) {
-            if ($point['harmonized'] === null) {
+            if (! $this->wellCovered($point, $period)) {
                 continue;
             }
 
@@ -49,7 +52,7 @@ class DetectAnomalies
         $now = now();
 
         foreach ($series['points'] as $point) {
-            if ($point['harmonized'] === null) {
+            if (! $this->wellCovered($point, $period)) {
                 continue;
             }
 
@@ -111,6 +114,25 @@ class DetectAnomalies
         });
 
         return count($alerts);
+    }
+
+    /**
+     * Only compare periods we actually observed for most of their length: a
+     * week with one fetched day is not a quiet week, it is an unknown one.
+     *
+     * @param  array<string, mixed>  $point
+     */
+    private function wellCovered(array $point, CalendarPeriod $period): bool
+    {
+        if ($point['harmonized'] === null || $point['source'] === null) {
+            return false;
+        }
+
+        $coverage = (int) ($point[$point['source']]['coverage_days'] ?? 0);
+        $start = CarbonImmutable::parse($point['period_start']);
+        $length = (int) $start->diffInDays($period->next($start));
+
+        return $coverage >= (int) ceil(self::MIN_COVERAGE * $length);
     }
 
     private function message(CalendarPeriod $period, CarbonImmutable $start, float $observed, float $expected, float $z, int $years, ReferenceSensor $reference): string

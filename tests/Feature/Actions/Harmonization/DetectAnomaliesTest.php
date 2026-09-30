@@ -82,3 +82,16 @@ it('replaces previous alerts of the same period and method', function () {
 
     expect(Alert::query()->where('region_id', $region->id)->exists())->toBeFalse();
 });
+
+it('ignores years in which the period was barely observed', function () {
+    $region = Region::factory()->preset()->create();
+
+    foreach (ISO_WEEK_32_MONDAYS as $year => $monday) {
+        CalendarEntry::factory()->forRegion($region)->weekly($monday, Instrument::Modis, $year === 2024 ? 500 : 0)
+            ->state(['coverage_days' => $year === 2024 ? 7 : 1])
+            ->create();
+    }
+
+    expect(app(DetectAnomalies::class)($region, CalendarPeriod::Week))->toBe(0)
+        ->and(Alert::query()->count())->toBe(0);
+});

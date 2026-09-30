@@ -7,6 +7,7 @@ use App\Models\CalendarEntry;
 use App\Models\Region;
 use App\Support\Db\PeriodExpression;
 use App\Support\Stats\FrpHistogram;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 class BuildCalendar
 {
     public const int CHUNK = 500;
+
+    public function __construct(private readonly CoverageDays $coverageDays) {}
 
     /**
      * @return int number of calendar entries written
@@ -58,18 +61,25 @@ class BuildCalendar
             ->get()
             ->groupBy(fn (object $row) => $row->instrument.'|'.substr((string) $row->period_start, 0, 10));
 
-        $coverage = DB::table('cell_days')
-            ->select(['instrument', $periodStart])
-            ->selectRaw('count(distinct acq_date) as coverage_days')
-            ->groupBy('instrument', $periodGroup)
-            ->get();
+        // Coverage counts the days each instrument was really observed over
+        // this region (see CoverageDays), so a period is only emitted, and a
+        // zero only means "no fire", when we actually looked.
+        $coverage = [];
+
+        foreach (($this->coverageDays)($region) as $instrument => $dates) {
+            foreach (array_keys($dates) as $date) {
+                $start = $period->startOf(CarbonImmutable::parse($date))->toDateString();
+                $coverage[$instrument.'|'.$start] = ($coverage[$instrument.'|'.$start] ?? 0) + 1;
+            }
+        }
+
+        ksort($coverage);
 
         $now = now();
         $rows = [];
 
-        foreach ($coverage as $cover) {
-            $periodStart = substr((string) $cover->period_start, 0, 10);
-            $key = $cover->instrument.'|'.$periodStart;
+        foreach ($coverage as $key => $coverageDays) {
+            [$instrument, $periodStart] = explode('|', $key, 2);
             $row = $activity->get($key);
             $histogram = FrpHistogram::empty();
 
@@ -81,7 +91,7 @@ class BuildCalendar
                 'region_id' => $region->id,
                 'period' => $period->value,
                 'period_start' => $periodStart,
-                'instrument' => $cover->instrument,
+                'instrument' => $instrument,
                 'detections' => (int) ($row->detections ?? 0),
                 'active_cells' => (int) ($row->active_cells ?? 0),
                 'cell_days' => (int) ($row->cell_days ?? 0),
@@ -94,7 +104,7 @@ class BuildCalendar
                 'nominal_confidence' => (int) ($row->nominal_confidence ?? 0),
                 'high_confidence' => (int) ($row->high_confidence ?? 0),
                 'active_days' => (int) ($row->active_days ?? 0),
-                'coverage_days' => (int) $cover->coverage_days,
+                'coverage_days' => $coverageDays,
                 'frp_histogram' => json_encode($histogram),
                 'created_at' => $now,
                 'updated_at' => $now,

@@ -6,11 +6,19 @@ use App\Enums\Instrument;
 use App\Enums\Satellite;
 use App\Models\CalendarEntry;
 use App\Models\CellDay;
+use App\Models\IngestRun;
 use App\Models\Region;
 use App\Support\Stats\FrpHistogram;
 
 it('counts distinct cell-days per instrument across satellites and keeps true zeros', function () {
     $region = Region::factory()->preset()->withBox([0, 0, 10, 10])->create();
+
+    // MODIS was fetched for this box on 22 Sep and saw no fire there: a true zero.
+    IngestRun::factory()->create([
+        'source' => 'area:MODIS_SP',
+        'instrument' => Instrument::Modis,
+        'meta' => ['from' => '2026-09-22', 'days' => 1, 'bbox' => [-1, -1, 11, 11]],
+    ]);
 
     CellDay::factory()->satellite(Satellite::SuomiNpp)->at(5.0, 5.0, '2026-09-22')->detections(3)->frp(12, 8)->create();
     CellDay::factory()->satellite(Satellite::Noaa20)->at(5.0, 5.0, '2026-09-22')->detections(2)->frp(30, 30)->create();
@@ -78,4 +86,43 @@ it('replaces the previous calendar of the region and period', function () {
     app(BuildCalendar::class)($region, CalendarPeriod::Day);
 
     expect(CalendarEntry::query()->where('region_id', $region->id)->where('period', 'day')->pluck('period_start')->map->toDateString()->all())->toBe(['2026-09-22']);
+});
+
+it('does not treat data elsewhere on Earth as coverage of this area', function () {
+    $region = Region::factory()->preset()->withBox([0, 0, 10, 10])->create();
+
+    // Years of MODIS history for another place, and one fetched week here.
+    CellDay::factory()->satellite(Satellite::Terra)->at(40.0, 40.0, '2019-09-23')->create();
+    CellDay::factory()->satellite(Satellite::Terra)->at(40.0, 40.0, '2020-09-21')->create();
+    CellDay::factory()->satellite(Satellite::Terra)->at(5.0, 5.0, '2026-09-22')->create();
+
+    app(BuildCalendar::class)($region, CalendarPeriod::Week);
+
+    expect(CalendarEntry::query()->where('region_id', $region->id)->where('period', 'week')->pluck('period_start')->map->toDateString()->all())
+        ->toBe(['2026-09-21']);
+});
+
+it('counts a fetched but fire-free window as coverage for every day requested', function () {
+    $region = Region::factory()->preset()->withBox([0, 0, 10, 10])->create();
+
+    IngestRun::factory()->create([
+        'source' => 'area:VIIRS_SNPP_SP',
+        'instrument' => Instrument::Viirs,
+        'meta' => ['from' => '2024-08-05', 'days' => 5, 'bbox' => [-1, -1, 11, 11]],
+    ]);
+    // A window fetched for a box that does not contain the region is not coverage.
+    IngestRun::factory()->create([
+        'source' => 'area:MODIS_SP',
+        'instrument' => Instrument::Modis,
+        'meta' => ['from' => '2024-08-05', 'days' => 5, 'bbox' => [2, 2, 3, 3]],
+    ]);
+
+    app(BuildCalendar::class)($region, CalendarPeriod::Week);
+
+    $week = CalendarEntry::query()->where('region_id', $region->id)->where('period', 'week')->sole();
+
+    expect($week->instrument)->toBe(Instrument::Viirs)
+        ->and($week->period_start->toDateString())->toBe('2024-08-05')
+        ->and($week->coverage_days)->toBe(5)
+        ->and($week->cell_days)->toBe(0);
 });

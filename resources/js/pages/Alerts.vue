@@ -2,15 +2,17 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import AlertList from '@/components/continuum/AlertList.vue';
+import AlertsMap from '@/components/continuum/AlertsMap.vue';
 import SectionCard from '@/components/continuum/SectionCard.vue';
 import { home } from '@/routes';
 import { index } from '@/routes/alerts';
-import type { FireAlert, Paginated } from '@/types/continuum';
+import type { AlertMapRegion, FireAlert, Paginated } from '@/types/continuum';
 
 const props = defineProps<{
     alerts: Paginated<FireAlert>;
     filters: { severity: string | null; region: string | null };
     regions: { slug: string; name: string; color: string }[];
+    map: AlertMapRegion[];
 }>();
 
 defineOptions({
@@ -69,6 +71,17 @@ watch([severity, region], () => {
                 </option>
             </select>
         </div>
+
+        <SectionCard
+            title="Where"
+            description="Each area is coloured by its worst flagged period; click one to filter the list."
+        >
+            <AlertsMap
+                :regions="map"
+                :selected="region || null"
+                @select="(slug) => (region = slug ?? '')"
+            />
+        </SectionCard>
 
         <SectionCard :title="`${alerts.meta.total} flagged period(s)`">
             <AlertList :alerts="alerts.data" show-region />

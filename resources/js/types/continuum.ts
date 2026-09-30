@@ -377,3 +377,20 @@ export type DataIntake = {
     areas: IntakeArea[];
     recent_runs: IntakeRun[];
 };
+
+export type AlertMapRegion = {
+    slug: string;
+    name: string;
+    color: string;
+    is_preset: boolean;
+    bbox: [number, number, number, number];
+    center: { lat: number; lon: number };
+    alerts: { total: number; critical: number; warning: number; watch: number };
+    top: {
+        period: CalendarPeriod;
+        period_start: string;
+        severity: Severity;
+        z_score: number;
+        message: string;
+    } | null;
+};

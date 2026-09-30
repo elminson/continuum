@@ -7,13 +7,11 @@ import {
     Popup,
     setWorkerUrl,
 } from 'maplibre-gl';
-import type {
-    MapLayerMouseEvent,
-    RasterTileSource,
-    StyleSpecification,
-} from 'maplibre-gl';
+import type { MapLayerMouseEvent, RasterTileSource } from 'maplibre-gl';
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { basemapStyle, imageryTiles } from '@/lib/basemap';
+import type { Basemap } from '@/lib/basemap';
 import { INSTRUMENT_COLORS, formatNumber } from '@/lib/format';
 import { hotspots } from '@/routes/api/v1';
 
@@ -46,80 +44,12 @@ const counts = ref({ modis: 0, viirs: 0 });
 let map: MapLibreMap | null = null;
 let requestId = 0;
 
-/**
- * NASA GIBS imagery: the selected day's VIIRS (NOAA-20) true-colour scene when
- * a date is set, Blue Marble otherwise. Both are key-free. Esri's reference
- * tiles add borders and place names on top.
- */
-type Basemap = 'truecolor' | 'bluemarble';
-
 const basemapChoice = ref<Basemap>('truecolor');
-
-/**
- * GIBS publishes a day's true-colour scene a few hours after acquisition, so
- * never ask for anything newer than yesterday (UTC).
- */
-function imageryDate(date: string | null): string | null {
-    if (!date) {
-        return null;
-    }
-
-    const yesterday = new Date(Date.now() - 86400000)
-        .toISOString()
-        .slice(0, 10);
-
-    return date < yesterday ? date : yesterday;
-}
-
-function imageryTiles(date: string | null, choice: Basemap): string[] {
-    const day = imageryDate(date);
-
-    return day && choice === 'truecolor'
-        ? [
-              `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/${day}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
-          ]
-        : [
-              'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2004-08/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg',
-          ];
-}
 
 function applyImagery(): void {
     (map?.getSource('imagery') as RasterTileSource | undefined)?.setTiles(
         imageryTiles(props.date, basemapChoice.value),
     );
-}
-
-function basemap(): StyleSpecification {
-    return {
-        version: 8,
-        sources: {
-            imagery: {
-                type: 'raster',
-                tiles: imageryTiles(props.date, basemapChoice.value),
-                tileSize: 256,
-                maxzoom: 9,
-                attribution:
-                    'Imagery: <a href="https://www.earthdata.nasa.gov/data/tools/global-imagery-browse-services-gibs">NASA GIBS</a> · Labels: Esri · Fire data: NASA FIRMS',
-            },
-            labels: {
-                type: 'raster',
-                tiles: [
-                    'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-                ],
-                tileSize: 256,
-                maxzoom: 12,
-            },
-        },
-        layers: [
-            { id: 'imagery', type: 'raster', source: 'imagery' },
-            {
-                id: 'labels',
-                type: 'raster',
-                source: 'labels',
-                paint: { 'raster-opacity': 0.85 },
-            },
-        ],
-    };
 }
 
 function emptyCollection(): FeatureCollection {
@@ -338,7 +268,7 @@ onMounted(() => {
 
     map = new MapLibreMap({
         container: container.value,
-        style: basemap(),
+        style: basemapStyle(props.date, basemapChoice.value),
         bounds: [
             [w, s],
             [e, n],

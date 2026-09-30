@@ -41,3 +41,31 @@ it('rejects an unknown severity', function () {
         ->assertRedirect(route('home'))
         ->assertSessionHasErrors('severity');
 });
+
+it('summarises every visible area for the map, honouring the severity filter but not the region filter', function () {
+    $chaco = Region::factory()->preset()->create(['slug' => 'gran-chaco', 'name' => 'Gran Chaco']);
+    $quiet = Region::factory()->preset()->create(['slug' => 'quiet-area', 'name' => 'Zzz quiet area']);
+    Region::factory()->ownedBy(User::factory()->create())->create(['slug' => 'private-area']);
+    Alert::factory()->for($chaco)->create(['severity' => AlertSeverity::Critical, 'z_score' => 6.5, 'message' => 'worst']);
+    Alert::factory()->for($chaco)->create(['severity' => AlertSeverity::Critical, 'z_score' => 4.2, 'period_start' => '2025-08-04']);
+    Alert::factory()->for($chaco)->create(['severity' => AlertSeverity::Watch, 'z_score' => 2.1, 'period_start' => '2024-08-05']);
+
+    $this->get(route('alerts.index', ['region' => 'quiet-area']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('map', 2)
+            ->where('map.0.slug', 'gran-chaco')
+            ->where('map.0.alerts.total', 3)
+            ->where('map.0.alerts.critical', 2)
+            ->where('map.0.alerts.watch', 1)
+            ->where('map.0.top.message', 'worst')
+            ->where('map.0.top.severity', 'critical')
+            ->has('map.0.bbox', 4)
+            ->where('map.1.slug', 'quiet-area')
+            ->where('map.1.alerts.total', 0)
+            ->where('map.1.top', null));
+
+    $this->get(route('alerts.index', ['severity' => 'watch']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('map.0.alerts.total', 1)
+            ->where('map.0.top.severity', 'watch'));
+});

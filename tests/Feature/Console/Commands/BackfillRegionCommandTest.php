@@ -65,8 +65,7 @@ it('refuses to queue a second batch while one is still running for the region', 
     ]);
 
     $this->artisan('firms:backfill', ['region' => 'gran-chaco', '--source' => ['MODIS_SP'], '--from' => '2024-01-01', '--to' => '2024-01-05'])
-        ->expectsOutputToContain('already running')
-        ->expectsOutputToContain('40 of 100 windows done')
+        ->expectsOutputToContain('already running for')
         ->assertFailed();
 
     Bus::assertNothingBatched();

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AlertController;
+use App\Http\Controllers\AlertShowController;
 use App\Http\Controllers\ApiDocsController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
@@ -19,6 +20,7 @@ Route::get('regions/{region}', CalendarController::class)->name('regions.show');
 Route::get('regions/{region}/lab', LabController::class)->name('regions.lab');
 
 Route::get('alerts', AlertController::class)->name('alerts.index');
+Route::get('alerts/{alert}', AlertShowController::class)->name('alerts.show');
 Route::get('method', MethodController::class)->name('method');
 Route::get('how-it-works', EngineeringController::class)->name('engineering');
 Route::get('ingestion', IngestionController::class)->name('ingestion');

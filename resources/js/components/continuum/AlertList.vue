@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import SeverityBadge from '@/components/continuum/SeverityBadge.vue';
-import { Sparkles } from '@lucide/vue';
+import { MapPinned, Sparkles } from '@lucide/vue';
 import { formatNumber, formatPercent } from '@/lib/format';
+import { show as alertShow } from '@/routes/alerts';
 import { show } from '@/routes/regions';
 import type { FireAlert } from '@/types/continuum';
 
@@ -34,7 +35,9 @@ const CAUSE_SHORT: Record<string, string> = {
                     >
                         {{ alert.region.name }} ·
                     </Link>
-                    {{ alert.message }}
+                    <Link :href="alertShow(alert.id)" class="hover:underline">{{
+                        alert.message
+                    }}</Link>
                 </p>
                 <p class="text-xs text-muted-foreground">
                     z = {{ formatNumber(alert.z_score, 1) }} ·
@@ -91,6 +94,13 @@ const CAUSE_SHORT: Record<string, string> = {
                     </p>
                 </div>
             </div>
+            <Link
+                :href="alertShow(alert.id)"
+                class="inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
+                :aria-label="`Open the map of ${alert.message}`"
+            >
+                <MapPinned class="size-3.5" /> Map
+            </Link>
         </li>
     </ul>
     <p v-else class="text-sm text-muted-foreground">

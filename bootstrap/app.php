@@ -34,7 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
+            // Preload only the first chunks: the full list overflowed the proxy header buffer (502).
+            AddLinkHeadersForPreloadedAssets::using(12),
         ]);
 
         // The JSON API is read-only and public, but a signed-in browser should

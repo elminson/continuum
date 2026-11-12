@@ -117,7 +117,7 @@ const best = computed(() =>
                         ? `holdout error −${formatPercent(ratio.validation.mae_improvement)} vs naive`
                         : 'not calibrated'
                 "
-                accent="#38bdf8"
+                accent="#3b82f6"
             />
             <KpiTile
                 label="FRP visibility threshold"
@@ -129,7 +129,7 @@ const best = computed(() =>
                         ? `holdout error −${formatPercent(threshold.validation.mae_improvement)} vs naive`
                         : 'not calibrated'
                 "
-                accent="#a3e635"
+                accent="#4ade80"
             />
         </div>
 

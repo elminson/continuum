@@ -5,7 +5,39 @@ import { useChartTheme } from '@/lib/charts';
 import { formatNumber, formatPeriod } from '@/lib/format';
 import type { SeriesPoint } from '@/types/continuum';
 
-const props = defineProps<{ points: SeriesPoint[]; period: string }>();
+const props = withDefaults(
+    defineProps<{
+        points: SeriesPoint[];
+        period: string;
+        metric?: 'harmonized' | 'hotspots';
+    }>(),
+    { metric: 'harmonized' },
+);
+
+// Sequential ramps whose lightness rises monotonically, so they stay readable
+// for every colour-vision deficiency: ColorBrewer YlOrRd on light, inferno on dark.
+const RAMP_LIGHT = ['#ffffcc', '#fed976', '#fd8d3c', '#e31a1c', '#800026'];
+const RAMP_DARK = [
+    '#1b0c41',
+    '#4a0c6b',
+    '#781c6d',
+    '#a52c60',
+    '#cf4446',
+    '#ed6925',
+    '#fb9b06',
+    '#f7d13d',
+    '#fcffa4',
+];
+
+function valueOf(point: SeriesPoint): number | null {
+    if (props.metric === 'hotspots') {
+        return point.modis || point.viirs
+            ? (point.modis?.detections ?? 0) + (point.viirs?.detections ?? 0)
+            : null;
+    }
+
+    return point.harmonized;
+}
 
 const theme = useChartTheme();
 
@@ -76,14 +108,17 @@ const layout = computed(() => {
                   : d - 1;
 
         data.push({
-            value: [column, rowIndex.get(rowKey) as number, point.harmonized],
-            itemStyle: point.estimated
-                ? {
-                      borderColor: theme.isDark.value ? '#fafafa' : '#18181b',
-                      borderWidth: 1,
-                      borderType: 'dashed',
-                  }
-                : undefined,
+            value: [column, rowIndex.get(rowKey) as number, valueOf(point)],
+            itemStyle:
+                props.metric === 'harmonized' && point.estimated
+                    ? {
+                          borderColor: theme.isDark.value
+                              ? '#fafafa'
+                              : '#18181b',
+                          borderWidth: 1,
+                          borderType: 'dashed',
+                      }
+                    : undefined,
         });
     }
 
@@ -104,7 +139,9 @@ const option = computed(() => {
             formatter: (params: { dataIndex: number }) => {
                 const point = props.points[params.dataIndex];
 
-                return `<strong>${formatPeriod(point.period_start, props.period)}</strong><br>${formatNumber(point.harmonized)} harmonized cell-days${point.estimated ? '<br><em>estimated from ' + point.source?.toUpperCase() + '</em>' : ''}<br>MODIS ${point.modis ? formatNumber(point.modis.cell_days) : '—'} · VIIRS ${point.viirs ? formatNumber(point.viirs.cell_days) : '—'}`;
+                const hotspots = `MODIS ${formatNumber(point.modis?.detections)} · VIIRS ${formatNumber(point.viirs?.detections)} hotspots`;
+
+                return `<strong>${formatPeriod(point.period_start, props.period)}</strong><br>${formatNumber(point.harmonized)} harmonized fire cell-days${point.estimated ? ' <em>(estimated from ' + point.source?.toUpperCase() + ')</em>' : ''}<br>${hotspots}`;
             },
         },
         grid: { left: 64, right: 16, top: 10, bottom: 84 },
@@ -132,7 +169,7 @@ const option = computed(() => {
             bottom: 0,
             textStyle: { color: theme.muted.value },
             inRange: {
-                color: ['#1f2937', '#7c2d12', '#ea580c', '#fbbf24', '#fef3c7'],
+                color: theme.isDark.value ? RAMP_DARK : RAMP_LIGHT,
             },
         },
         series: [
@@ -164,8 +201,14 @@ const height = computed(
             :style="{ height }"
         />
         <p class="mt-1 text-[11px] text-muted-foreground">
-            Rows are {{ period === 'day' ? 'months' : 'years' }}; dashed cells
-            are estimated from the other sensor.
+            Rows are {{ period === 'day' ? 'months' : 'years' }}.
+            <template v-if="metric === 'harmonized'"
+                >Dashed cells are estimated from the other sensor.</template
+            >
+            <template v-else
+                >Raw MODIS + VIIRS pixels: VIIRS reports several per MODIS
+                pixel, so counts jump in 2012.</template
+            >
         </p>
     </div>
 </template>

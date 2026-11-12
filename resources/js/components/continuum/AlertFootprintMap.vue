@@ -65,7 +65,7 @@ function addLayers(): void {
         type: 'line',
         source: 'region',
         paint: {
-            'line-color': '#a3e635',
+            'line-color': '#4ade80',
             'line-width': 1.5,
             'line-dasharray': [2, 2],
         },

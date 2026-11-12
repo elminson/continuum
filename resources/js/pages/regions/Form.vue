@@ -47,17 +47,19 @@ const valid = computed(
         bbox.value[1] < bbox.value[3],
 );
 
-function useMapView(): void {
-    const bounds = map.value?.getBounds();
-
-    if (!bounds) {
-        return;
-    }
-
+function setBox(bounds: [number, number, number, number]): void {
     form.west = Number(bounds[0].toFixed(3));
     form.south = Number(bounds[1].toFixed(3));
     form.east = Number(bounds[2].toFixed(3));
     form.north = Number(bounds[3].toFixed(3));
+}
+
+function useMapView(): void {
+    const bounds = map.value?.getBounds();
+
+    if (bounds) {
+        setBox(bounds);
+    }
 }
 
 function submit(): void {
@@ -83,9 +85,7 @@ function submit(): void {
                     }}
                 </h1>
                 <p class="text-sm text-muted-foreground">
-                    A rectangular box in degrees (WGS84). Areas crossing the
-                    antimeridian are not supported. Harmonization starts
-                    automatically after saving.
+                    Draw a rectangle on the map or type its corners in degrees.
                 </p>
             </div>
 
@@ -184,7 +184,7 @@ function submit(): void {
                     region ? 'Save changes' : 'Create and harmonize'
                 }}</Button>
                 <Button type="button" variant="outline" @click="useMapView"
-                    >Use current map view as the box</Button
+                    >Use map view</Button
                 >
             </div>
         </form>
@@ -196,12 +196,10 @@ function submit(): void {
                 :bbox="bbox"
                 :date="region?.summary?.last_date ?? null"
                 preview
+                draw
                 height="h-[520px]"
+                @drawn="setBox"
             />
-            <p class="mt-2 text-xs text-muted-foreground">
-                Pan and zoom, then press “Use current map view” to set the box,
-                or type coordinates. The dashed outline is the area.
-            </p>
         </div>
     </div>
 </template>

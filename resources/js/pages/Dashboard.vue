@@ -138,13 +138,13 @@ const cellRatio = computed(() =>
                 label="Raw pixel inflation"
                 :value="pixelRatio ? `×${formatNumber(pixelRatio, 1)}` : '—'"
                 hint="VIIRS pixels per MODIS pixel, before harmonization"
-                accent="#f43f5e"
+                accent="#cc79a7"
             />
             <KpiTile
                 label="After 1 km gridding"
                 :value="cellRatio ? `×${formatNumber(cellRatio, 1)}` : '—'"
                 hint="what remains is sensitivity, not pixel splitting"
-                accent="#a3e635"
+                accent="#4ade80"
             />
             <KpiTile
                 label="Record"

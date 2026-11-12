@@ -70,10 +70,10 @@ export function formatPeriod(value: string, period: string): string {
 }
 
 export const INSTRUMENT_COLORS = {
-    modis: '#38bdf8',
+    modis: '#3b82f6',
     viirs: '#f97316',
-    harmonized: '#a3e635',
-    naive: '#f43f5e',
+    harmonized: '#4ade80',
+    naive: '#cc79a7',
 } as const;
 
 export function formatDateTime(value: string | null | undefined): string {

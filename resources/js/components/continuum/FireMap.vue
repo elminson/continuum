@@ -7,7 +7,12 @@ import {
     Popup,
     setWorkerUrl,
 } from 'maplibre-gl';
-import type { MapLayerMouseEvent, RasterTileSource } from 'maplibre-gl';
+import type {
+    MapLayerMouseEvent,
+    MapMouseEvent,
+    MapTouchEvent,
+    RasterTileSource,
+} from 'maplibre-gl';
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { basemapStyle, imageryTiles } from '@/lib/basemap';
@@ -29,12 +34,21 @@ const props = withDefaults(
         height?: string;
         interactive?: boolean;
         preview?: boolean;
+        /** Show a "Draw area" control that lets the user drag a rectangle. */
+        draw?: boolean;
     }>(),
-    { mode: 'both', height: 'h-[420px]', interactive: true, preview: false },
+    {
+        mode: 'both',
+        height: 'h-[420px]',
+        interactive: true,
+        preview: false,
+        draw: false,
+    },
 );
 
 const emit = defineEmits<{
     loaded: [count: { modis: number; viirs: number }];
+    drawn: [bbox: [number, number, number, number]];
 }>();
 
 const container = ref<HTMLDivElement | null>(null);
@@ -56,8 +70,17 @@ function emptyCollection(): FeatureCollection {
     return { type: 'FeatureCollection', features: [] };
 }
 
-function boxPolygon(): Feature {
-    const [w, s, e, n] = props.bbox;
+const drawing = ref(false);
+let drawStart: [number, number] | null = null;
+
+function round(value: number): number {
+    return Math.round(value * 1000) / 1000;
+}
+
+function boxPolygon(
+    bbox: [number, number, number, number] = props.bbox,
+): Feature {
+    const [w, s, e, n] = bbox;
 
     return {
         type: 'Feature',
@@ -88,7 +111,7 @@ function addLayers(): void {
         type: 'line',
         source: 'aoi',
         paint: {
-            'line-color': '#a3e635',
+            'line-color': '#4ade80',
             'line-width': 1.5,
             'line-dasharray': [2, 2],
         },
@@ -276,7 +299,18 @@ onMounted(() => {
         fitBoundsOptions: { padding: 24 },
         interactive: props.interactive,
         attributionControl: { compact: true },
+        // Keeps the last frame readable so the map can be saved as a PNG.
+        canvasContextAttributes: { preserveDrawingBuffer: true },
     });
+
+    if (props.draw) {
+        map.on('mousedown', onDrawStart);
+        map.on('mousemove', onDrawMove);
+        map.on('mouseup', onDrawEnd);
+        map.on('touchstart', onDrawStart);
+        map.on('touchmove', onDrawMove);
+        map.on('touchend', onDrawEnd);
+    }
 
     if (props.interactive) {
         map.addControl(
@@ -304,6 +338,71 @@ onBeforeUnmount(() => {
     map?.remove();
     map = null;
 });
+
+function toggleDraw(): void {
+    if (!map) {
+        return;
+    }
+
+    drawing.value = !drawing.value;
+    drawStart = null;
+
+    if (drawing.value) {
+        map.dragPan.disable();
+        map.getCanvas().style.cursor = 'crosshair';
+    } else {
+        map.dragPan.enable();
+        map.getCanvas().style.cursor = '';
+    }
+}
+
+function rectangle(
+    from: [number, number],
+    to: [number, number],
+): [number, number, number, number] {
+    return [
+        round(Math.min(from[0], to[0])),
+        round(Math.min(from[1], to[1])),
+        round(Math.max(from[0], to[0])),
+        round(Math.max(from[1], to[1])),
+    ];
+}
+
+function onDrawStart(event: MapMouseEvent | MapTouchEvent): void {
+    if (!drawing.value) {
+        return;
+    }
+
+    event.preventDefault();
+    drawStart = [event.lngLat.lng, event.lngLat.lat];
+}
+
+function onDrawMove(event: MapMouseEvent | MapTouchEvent): void {
+    if (!drawing.value || !drawStart || !map) {
+        return;
+    }
+
+    (map.getSource('aoi') as GeoJSONSource | undefined)?.setData(
+        boxPolygon(rectangle(drawStart, [event.lngLat.lng, event.lngLat.lat])),
+    );
+}
+
+function onDrawEnd(event: MapMouseEvent | MapTouchEvent): void {
+    if (!drawing.value || !drawStart) {
+        return;
+    }
+
+    const bbox = rectangle(drawStart, [event.lngLat.lng, event.lngLat.lat]);
+    toggleDraw();
+
+    if (bbox[0] < bbox[2] && bbox[1] < bbox[3]) {
+        emit('drawn', bbox);
+    } else {
+        (map?.getSource('aoi') as GeoJSONSource | undefined)?.setData(
+            boxPolygon(),
+        );
+    }
+}
 
 function getBounds(): [number, number, number, number] | null {
     if (!map) {
@@ -378,15 +477,30 @@ watch(
                 >circle size ∝ FRP · click a cell</span
             >
         </div>
+        <button
+            v-if="draw"
+            type="button"
+            class="absolute top-2 left-2 z-10 rounded-md px-2.5 py-1 text-xs font-medium shadow backdrop-blur"
+            :class="
+                drawing
+                    ? 'bg-foreground text-background'
+                    : 'bg-background/90 text-foreground hover:bg-background'
+            "
+            @click="toggleDraw"
+        >
+            {{ drawing ? 'Drag a rectangle… (click to cancel)' : 'Draw area' }}
+        </button>
         <div
             v-if="loading"
-            class="absolute top-2 left-2 rounded-md bg-background/85 px-2 py-1 text-xs shadow backdrop-blur"
+            class="absolute left-2 rounded-md bg-background/85 px-2 py-1 text-xs shadow backdrop-blur"
+            :class="draw ? 'top-10' : 'top-2'"
         >
             Loading {{ date }}…
         </div>
         <div
             v-if="error"
-            class="absolute top-2 left-2 rounded-md bg-destructive/90 px-2 py-1 text-xs text-white shadow"
+            class="absolute left-2 rounded-md bg-destructive/90 px-2 py-1 text-xs text-white shadow"
+            :class="draw ? 'top-10' : 'top-2'"
         >
             {{ error }}
         </div>

@@ -60,3 +60,21 @@ it('hides a private region from guests and other users but shows it to its owner
 it('returns 404 for an unknown slug', function () {
     $this->get('/regions/does-not-exist')->assertNotFound();
 });
+
+it('limits the series to the chosen dates and compares them with earlier years', function () {
+    $region = Region::factory()->preset()->create();
+
+    foreach ([2023 => 10, 2024 => 30, 2025 => 50] as $year => $cellDays) {
+        CalendarEntry::factory()->forRegion($region)->daily("{$year}-09-05", Instrument::Modis, $cellDays)->create();
+    }
+
+    $this->get(route('regions.show', [$region, 'from' => '2025-09-05', 'to' => '2025-09-30']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.from', '2025-09-05')
+            ->where('filters.to', '2025-09-30')
+            ->where('filters.period', 'day')
+            ->has('series.points', 1)
+            ->where('comparison.current', 50)
+            ->where('comparison.median', 20)
+            ->where('comparison.years', 2));
+});

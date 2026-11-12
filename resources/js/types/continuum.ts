@@ -410,3 +410,33 @@ export type AlertMapRegion = {
         message: string;
     } | null;
 };
+
+export type PeriodComparison = {
+    from: string;
+    to: string;
+    days: number;
+    current: number;
+    hotspots: number;
+    reference: ReferenceSensor;
+    median: number | null;
+    change: number | null;
+    percentile: number | null;
+    years: number;
+    history: { year: number; value: number }[];
+    reason: 'range_too_long' | 'no_history' | null;
+};
+
+export type ValidationRow = {
+    region: string;
+    slug: string;
+    area_km2: number;
+    reference: ReferenceSensor;
+    overlap_days: number;
+    test_days: number | null;
+    mae: number;
+    naive_mae: number;
+    improvement: number | null;
+    r2: number | null;
+    correlation: number | null;
+    issues: ('small_sample' | 'weak_daily_fit' | 'barely_beats_naive')[];
+};

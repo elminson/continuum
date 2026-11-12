@@ -108,27 +108,15 @@ class HarmonizedCalendar
         $referenceEntry = $reference === ReferenceSensor::Modis ? $modis : $viirs;
         $otherEntry = $reference === ReferenceSensor::Modis ? $viirs : $modis;
 
-        $harmonized = null;
-        $low = null;
-        $high = null;
-        $estimated = false;
-        $source = null;
-
-        if ($referenceEntry !== null && $referenceEntry->coverage_days > 0) {
-            $harmonized = $low = $high = (float) $referenceEntry->cell_days;
-            $source = $reference->value;
-        } elseif ($otherEntry !== null && $otherEntry->coverage_days > 0 && $factor !== null) {
-            $estimated = true;
-            $source = $reference->other()->value;
-
-            if ($method === HarmonizationMethod::FrpThreshold) {
-                $harmonized = $low = $high = (float) FrpHistogram::countAtOrAbove($otherEntry->frp_histogram ?? [], $factor['value']);
-            } else {
-                $harmonized = $otherEntry->cell_days * $factor['value'];
-                $low = $otherEntry->cell_days * $factor['low'];
-                $high = $otherEntry->cell_days * $factor['high'];
-            }
-        }
+        $transfer = $this->transfer(
+            $referenceEntry?->coverage_days > 0 ? $referenceEntry->cell_days : null,
+            $otherEntry?->coverage_days > 0 ? $otherEntry->cell_days : null,
+            fn (): array => $otherEntry->frp_histogram ?? [],
+            $factor,
+            $method,
+        );
+        [$harmonized, $low, $high, $estimated] = $transfer ?? [null, null, null, false];
+        $source = $transfer === null ? null : ($estimated ? $reference->other()->value : $reference->value);
 
         $naiveEntry = $viirs !== null && $viirs->coverage_days > 0 ? $viirs : $modis;
 
@@ -145,6 +133,109 @@ class HarmonizedCalendar
             'factor' => $factor['value'] ?? null,
             'naive' => $naiveEntry?->coverage_days > 0 ? $naiveEntry->cell_days : null,
         ];
+    }
+
+    /**
+     * Harmonized cell-days and raw hotspots summed over each date window,
+     * read in one query without hydrating models. Used where only totals are
+     * needed (comparisons over many years), so it stays fast on long records.
+     *
+     * @param  list<array{0: string, 1: string}>  $windows  inclusive [from, to] dates
+     * @return list<array{harmonized: float, hotspots: int}>
+     */
+    public function dailyTotals(Region $region, HarmonizationMethod $method, ReferenceSensor $reference, array $windows): array
+    {
+        if ($method === HarmonizationMethod::FrpThreshold && $reference !== ReferenceSensor::Modis) {
+            $method = HarmonizationMethod::Ratio;
+        }
+
+        $totals = array_map(fn (): array => ['harmonized' => 0.0, 'hotspots' => 0], $windows);
+
+        if ($windows === []) {
+            return $totals;
+        }
+
+        $factors = $this->factors($region, $method, $reference);
+        $days = [];
+
+        CalendarEntry::query()
+            ->toBase()
+            ->where('region_id', $region->id)
+            ->where('period', CalendarPeriod::Day->value)
+            ->whereBetween('period_start', [min(array_column($windows, 0)), max(array_column($windows, 1))])
+            ->where(function ($query) use ($windows): void {
+                foreach ($windows as [$from, $to]) {
+                    $query->orWhereBetween('period_start', [$from, $to]);
+                }
+            })
+            ->orderBy('period_start')
+            ->get(['period_start', 'instrument', 'cell_days', 'detections', 'coverage_days', 'frp_histogram'])
+            ->each(function (object $row) use (&$days): void {
+                $days[substr((string) $row->period_start, 0, 10)][$row->instrument] = $row;
+            });
+
+        foreach ($days as $date => $byInstrument) {
+            $month = (int) substr($date, 5, 2);
+            $referenceRow = $byInstrument[$reference->value] ?? null;
+            $otherRow = $byInstrument[$reference->other()->value] ?? null;
+
+            $transfer = $this->transfer(
+                $referenceRow?->coverage_days > 0 ? (int) $referenceRow->cell_days : null,
+                $otherRow?->coverage_days > 0 ? (int) $otherRow->cell_days : null,
+                fn (): array => $this->decodeHistogram($otherRow->frp_histogram ?? null),
+                $factors[$month] ?? $factors[CalibrationFactor::ALL_YEAR] ?? null,
+                $method,
+            );
+            $hotspots = array_sum(array_map(fn (object $row) => $row->coverage_days > 0 ? (int) $row->detections : 0, $byInstrument));
+
+            foreach ($windows as $index => [$from, $to]) {
+                if ($date >= $from && $date <= $to) {
+                    $totals[$index] = [
+                        'harmonized' => $totals[$index]['harmonized'] + ($transfer[0] ?? 0.0),
+                        'hotspots' => $totals[$index]['hotspots'] + $hotspots,
+                    ];
+                }
+            }
+        }
+
+        return $totals;
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function decodeHistogram(mixed $json): array
+    {
+        $counts = is_string($json) ? json_decode($json, true) : null;
+
+        return is_array($counts) ? array_values(array_map(intval(...), $counts)) : [];
+    }
+
+    /**
+     * The reference sensor's own count when it flew, otherwise the other
+     * sensor transferred onto the reference scale.
+     *
+     * @param  \Closure(): list<int>  $otherHistogram  resolved only for the FRP-threshold transfer
+     * @param  array{value: float, low: float, high: float}|null  $factor
+     * @return array{0: float, 1: float, 2: float, 3: bool}|null value, low, high, estimated
+     */
+    private function transfer(?int $referenceCellDays, ?int $otherCellDays, \Closure $otherHistogram, ?array $factor, HarmonizationMethod $method): ?array
+    {
+        if ($referenceCellDays !== null) {
+            return [(float) $referenceCellDays, (float) $referenceCellDays, (float) $referenceCellDays, false];
+        }
+
+        if ($otherCellDays === null || $factor === null) {
+            return null;
+        }
+
+        if ($method === HarmonizationMethod::FrpThreshold) {
+            $value = (float) FrpHistogram::countAtOrAbove($otherHistogram(), $factor['value']);
+
+            return [$value, $value, $value, true];
+        }
+
+        return [$otherCellDays * $factor['value'], $otherCellDays * $factor['low'], $otherCellDays * $factor['high'], true];
     }
 
     /**

@@ -2,6 +2,7 @@
 import { Deferred, Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
 import {
     Download,
+    FileSpreadsheet,
     FlaskConical,
     History,
     Pencil,
@@ -10,6 +11,7 @@ import {
 import { computed, ref, watch } from 'vue';
 import AlertList from '@/components/continuum/AlertList.vue';
 import CalendarHeatmap from '@/components/continuum/CalendarHeatmap.vue';
+import ComparisonChart from '@/components/continuum/ComparisonChart.vue';
 import FactorTable from '@/components/continuum/FactorTable.vue';
 import FireMap from '@/components/continuum/FireMap.vue';
 import HarmonizedSeriesChart from '@/components/continuum/HarmonizedSeriesChart.vue';
@@ -19,19 +21,18 @@ import SeasonBar from '@/components/continuum/SeasonBar.vue';
 import SectionCard from '@/components/continuum/SectionCard.vue';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCompact, formatDate, formatNumber } from '@/lib/format';
+import { home, method as methodPage } from '@/routes';
 import {
-    formatCompact,
-    formatDate,
-    formatNumber,
-    formatPercent,
-} from '@/lib/format';
-import { home } from '@/routes';
-import { exportMethod as exportCalendar } from '@/routes/api/v1/regions';
+    exportMethod as exportCalendar,
+    hotspots as exportHotspots,
+} from '@/routes/api/v1/regions';
 import { backfill, edit, harmonize, index, lab, show } from '@/routes/regions';
 import type {
     CriticalPeriods,
     Factor,
     FireAlert,
+    PeriodComparison,
     Receipt,
     Region,
     SelectOption,
@@ -53,6 +54,7 @@ const props = defineProps<{
         references: SelectOption[];
     };
     series: Series;
+    comparison: PeriodComparison | null;
     critical: CriticalPeriods;
     alerts: FireAlert[];
     factors: Factor[];
@@ -81,6 +83,9 @@ setLayoutProps({
 const period = ref(props.filters.period);
 const method = ref(props.filters.method);
 const reference = ref(props.filters.reference);
+const from = ref(props.filters.from ?? '');
+const to = ref(props.filters.to ?? '');
+const calendarMetric = ref<'harmonized' | 'hotspots'>('harmonized');
 const showNaive = ref(false);
 const showNative = ref(true);
 const mapMode = ref<'both' | 'modis' | 'viirs'>('both');
@@ -90,49 +95,112 @@ const mapDate = ref<string | null>(
         null,
 );
 
-watch([period, method, reference], () => {
-    router.get(
-        show(props.region.slug).url,
-        {
-            period: period.value,
-            method: method.value,
-            reference: reference.value,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-            only: ['series', 'critical', 'filters', 'receipt'],
-        },
-    );
+function query(): Record<string, string> {
+    const params: Record<string, string> = {
+        period: period.value,
+        method: method.value,
+        reference: reference.value,
+    };
+
+    if (from.value && to.value && from.value <= to.value) {
+        params.from = from.value;
+        params.to = to.value;
+    }
+
+    return params;
+}
+
+function reload(): void {
+    router.get(show(props.region.slug).url, query(), {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        only: ['series', 'critical', 'comparison', 'filters', 'receipt'],
+    });
+}
+
+watch([period, method, reference], reload);
+watch([from, to], ([f, t]) => {
+    if ((f && t && f <= t) || (!f && !t)) {
+        reload();
+    }
 });
 
-const totals = computed(() => {
-    const points = props.series.points;
-    const harmonized = points.reduce((sum, p) => sum + (p.harmonized ?? 0), 0);
-    const estimated = points.filter((p) => p.estimated).length;
-    const modis = points.reduce((sum, p) => sum + (p.modis?.cell_days ?? 0), 0);
-    const viirs = points.reduce((sum, p) => sum + (p.viirs?.cell_days ?? 0), 0);
-    const frp = points.reduce(
-        (sum, p) => sum + (p.modis?.frp_sum ?? 0) + (p.viirs?.frp_sum ?? 0),
-        0,
-    );
+const lastDate = computed(() => props.region.summary?.last_date ?? null);
 
-    return { harmonized, estimated, modis, viirs, frp, count: points.length };
+function shift(date: string, days: number): string {
+    const d = new Date(`${date}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + days);
+
+    return d.toISOString().slice(0, 10);
+}
+
+const presets = computed(() => {
+    const last = lastDate.value;
+
+    if (!last) {
+        return [];
+    }
+
+    return [
+        { label: '30 days', from: shift(last, -29), to: last },
+        { label: '12 months', from: shift(last, -364), to: last },
+        {
+            label: `${last.slice(0, 4)}`,
+            from: `${last.slice(0, 4)}-01-01`,
+            to: last,
+        },
+        { label: 'All years', from: '', to: '' },
+    ];
 });
+
+function applyPreset(preset: { from: string; to: string }): void {
+    from.value = preset.from;
+    to.value = preset.to;
+}
+
+const rangeLabel = computed(() =>
+    props.comparison
+        ? `${formatDate(props.comparison.from)} – ${formatDate(props.comparison.to)}`
+        : '',
+);
+
+const fileStem = computed(
+    () =>
+        `continuum_${props.region.slug}${props.filters.from ? `_${props.filters.from}_${props.filters.to}` : ''}`,
+);
+
+const exportUrl = computed(() =>
+    exportCalendar.url(props.region.slug, { query: query() }),
+);
+
+const hotspotsUrl = computed(() =>
+    exportHotspots.url(props.region.slug, {
+        query: props.comparison
+            ? { from: props.comparison.from, to: props.comparison.to }
+            : {},
+    }),
+);
 
 const methodOption = computed(() =>
     props.options.methods.find((m) => m.value === props.series.method),
 );
-const exportUrl = computed(() =>
-    exportCalendar.url(props.region.slug, {
-        query: {
-            period: period.value,
-            method: method.value,
-            reference: reference.value,
-        },
-    }),
-);
+
+const change = computed(() => {
+    const value = props.comparison?.change;
+
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    const percent = Math.round(value * 100);
+
+    return {
+        text: `${percent > 0 ? '+' : ''}${percent}%`,
+        color:
+            percent >= 25 ? '#e69f00' : percent <= -25 ? '#3b82f6' : undefined,
+    };
+});
 </script>
 
 <template>
@@ -197,8 +265,13 @@ const exportUrl = computed(() =>
                     >
                 </Button>
                 <Button variant="outline" size="sm" as-child>
+                    <a :href="hotspotsUrl"
+                        ><FileSpreadsheet class="size-4" /> Hotspots CSV</a
+                    >
+                </Button>
+                <Button variant="outline" size="sm" as-child>
                     <a :href="exportUrl"
-                        ><Download class="size-4" /> CSV + receipt</a
+                        ><Download class="size-4" /> Calendar CSV</a
                     >
                 </Button>
                 <template v-if="region.is_owner">
@@ -223,7 +296,45 @@ const exportUrl = computed(() =>
             class="flex flex-wrap items-end gap-3 rounded-xl border border-sidebar-border/70 bg-card p-3 dark:border-sidebar-border"
         >
             <label class="grid gap-1 text-xs">
-                <span class="text-muted-foreground">Period</span>
+                <span class="text-muted-foreground">From</span>
+                <input
+                    v-model="from"
+                    type="date"
+                    :min="region.summary?.first_date ?? undefined"
+                    :max="to || (lastDate ?? undefined)"
+                    class="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                />
+            </label>
+            <label class="grid gap-1 text-xs">
+                <span class="text-muted-foreground">To</span>
+                <input
+                    v-model="to"
+                    type="date"
+                    :min="from || (region.summary?.first_date ?? undefined)"
+                    :max="lastDate ?? undefined"
+                    class="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                />
+            </label>
+            <div
+                class="flex overflow-hidden rounded-md border border-border text-xs"
+            >
+                <button
+                    v-for="preset in presets"
+                    :key="preset.label"
+                    type="button"
+                    class="h-8 px-2.5"
+                    :class="
+                        from === preset.from && to === preset.to
+                            ? 'bg-foreground text-background'
+                            : 'hover:bg-muted'
+                    "
+                    @click="applyPreset(preset)"
+                >
+                    {{ preset.label }}
+                </button>
+            </div>
+            <label class="grid gap-1 text-xs">
+                <span class="text-muted-foreground">Group by</span>
                 <select
                     v-model="period"
                     class="h-8 rounded-md border border-input bg-background px-2 text-sm"
@@ -237,96 +348,119 @@ const exportUrl = computed(() =>
                     </option>
                 </select>
             </label>
-            <label class="grid gap-1 text-xs">
-                <span class="text-muted-foreground">Transfer method</span>
-                <select
-                    v-model="method"
-                    class="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            <details class="group basis-full text-xs">
+                <summary
+                    class="cursor-pointer text-muted-foreground select-none hover:text-foreground"
                 >
-                    <option
-                        v-for="o in options.methods"
-                        :key="o.value"
-                        :value="o.value"
+                    Harmonization options
+                </summary>
+                <div class="mt-2 flex flex-wrap items-end gap-3">
+                    <label class="grid gap-1">
+                        <span class="text-muted-foreground"
+                            >Transfer method</span
+                        >
+                        <select
+                            v-model="method"
+                            class="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                        >
+                            <option
+                                v-for="o in options.methods"
+                                :key="o.value"
+                                :value="o.value"
+                            >
+                                {{ o.label }}
+                            </option>
+                        </select>
+                    </label>
+                    <label class="grid gap-1">
+                        <span class="text-muted-foreground">Scale</span>
+                        <select
+                            v-model="reference"
+                            class="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                        >
+                            <option
+                                v-for="o in options.references"
+                                :key="o.value"
+                                :value="o.value"
+                            >
+                                {{ o.label }}
+                            </option>
+                        </select>
+                    </label>
+                    <label class="flex items-center gap-2"
+                        ><input
+                            v-model="showNative"
+                            type="checkbox"
+                            class="size-3.5"
+                        />
+                        Native MODIS / VIIRS</label
                     >
-                        {{ o.label }}
-                    </option>
-                </select>
-            </label>
-            <label class="grid gap-1 text-xs">
-                <span class="text-muted-foreground">Express everything as</span>
-                <select
-                    v-model="reference"
-                    class="h-8 rounded-md border border-input bg-background px-2 text-sm"
-                >
-                    <option
-                        v-for="o in options.references"
-                        :key="o.value"
-                        :value="o.value"
+                    <label class="flex items-center gap-2"
+                        ><input
+                            v-model="showNaive"
+                            type="checkbox"
+                            class="size-3.5"
+                        />
+                        Naive merge</label
                     >
-                        {{ o.label }}
-                    </option>
-                </select>
-            </label>
-            <label class="flex items-center gap-2 text-xs"
-                ><input v-model="showNative" type="checkbox" class="size-3.5" />
-                native MODIS / VIIRS</label
-            >
-            <label
-                class="flex items-center gap-2 text-xs font-medium text-rose-500"
-                ><input v-model="showNaive" type="checkbox" class="size-3.5" />
-                show the naive merge (sensor-switch illusion)</label
-            >
-            <p
-                v-if="methodOption?.description"
-                class="basis-full text-xs text-muted-foreground"
-            >
-                {{ methodOption.description }}
-            </p>
+                    <p
+                        v-if="methodOption?.description"
+                        class="basis-full text-muted-foreground"
+                    >
+                        {{ methodOption.description }}
+                    </p>
+                </div>
+            </details>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <KpiTile
-                label="Harmonized cell-days"
-                :value="formatCompact(totals.harmonized)"
-                :hint="`${series.reference.toUpperCase()}-equivalent · ${totals.count} ${series.period}s`"
-                accent="#a3e635"
+                label="Hotspots"
+                :value="formatCompact(comparison?.hotspots ?? null)"
+                :hint="rangeLabel"
             />
             <KpiTile
-                label="Estimated periods"
-                :value="String(totals.estimated)"
-                hint="transferred from the other sensor"
+                label="Fire activity"
+                :value="formatCompact(comparison?.current ?? null)"
+                hint="harmonized cell-days, any sensor"
+                accent="#4ade80"
             />
             <KpiTile
-                label="MODIS native"
-                :value="formatCompact(totals.modis)"
-                hint="1 km cell-days"
-                accent="#38bdf8"
-            />
-            <KpiTile
-                label="VIIRS native"
-                :value="formatCompact(totals.viirs)"
-                hint="375 m pixels collapsed to 1 km cell-days"
-                accent="#f97316"
-            />
-            <KpiTile
-                label="Calibration"
-                :value="
-                    series.calibrated
-                        ? series.validation
-                            ? `−${formatPercent(series.validation.mae_improvement)} error`
-                            : 'ready'
-                        : 'pending'
-                "
+                label="Historical median"
+                :value="formatCompact(comparison?.median ?? null)"
                 :hint="
-                    series.validation
-                        ? `holdout MAE ${formatNumber(series.validation.harmonized.mae, 1)} vs naive ${formatNumber(series.validation.naive.mae, 1)}`
-                        : 'needs overlap days'
+                    comparison?.reason === 'range_too_long'
+                        ? 'pick a range of up to one year'
+                        : comparison?.years
+                          ? `same dates, ${comparison.years} earlier years`
+                          : 'no earlier years yet'
+                "
+            />
+            <KpiTile
+                label="Versus median"
+                :value="change?.text ?? '—'"
+                :accent="change?.color"
+                :hint="
+                    comparison?.percentile !== null &&
+                    comparison?.percentile !== undefined
+                        ? `higher than ${Math.round(comparison.percentile)}% of earlier years`
+                        : ''
                 "
             />
         </div>
 
         <SectionCard
+            v-if="comparison && comparison.history.length > 0"
+            title="Same dates in earlier years"
+            :description="`${rangeLabel} against every earlier year of the record`"
+            :download="`${fileStem}_vs_median`"
+        >
+            <ComparisonChart :comparison="comparison" />
+        </SectionCard>
+
+        <SectionCard
             title="Harmonized burning activity"
+            :download="`${fileStem}_series`"
             :description="`Active 1 km cell-days per ${series.period}; shaded band is the 95% transfer interval on estimated periods.`"
         >
             <HarmonizedSeriesChart
@@ -338,7 +472,7 @@ const exportUrl = computed(() =>
             />
             <p
                 v-if="showNaive"
-                class="mt-2 rounded-md bg-rose-500/10 p-2 text-xs text-rose-600 dark:text-rose-400"
+                class="mt-2 rounded-md bg-muted p-2 text-xs text-muted-foreground"
             >
                 The naive merge concatenates whichever sensor is newest. Where
                 VIIRS starts (2012) it jumps by the sensitivity gap, not because
@@ -348,12 +482,42 @@ const exportUrl = computed(() =>
 
         <div class="grid gap-4 xl:grid-cols-2">
             <SectionCard
-                title="Burning activity calendar"
-                :description="`Each cell is one ${series.period}; brighter is more harmonized activity.`"
+                title="Fire activity calendar"
+                :description="`Each cell is one ${series.period}`"
+                :download="`${fileStem}_calendar_${calendarMetric}`"
+                :download-note="
+                    calendarMetric === 'hotspots'
+                        ? 'raw hotspots'
+                        : 'harmonized cell-days'
+                "
             >
+                <template #actions>
+                    <div
+                        class="flex overflow-hidden rounded-md border border-border text-xs"
+                    >
+                        <button
+                            v-for="metric in [
+                                'harmonized',
+                                'hotspots',
+                            ] as const"
+                            :key="metric"
+                            type="button"
+                            class="px-2.5 py-1 capitalize"
+                            :class="
+                                calendarMetric === metric
+                                    ? 'bg-foreground text-background'
+                                    : 'hover:bg-muted'
+                            "
+                            @click="calendarMetric = metric"
+                        >
+                            {{ metric }}
+                        </button>
+                    </div>
+                </template>
                 <CalendarHeatmap
                     :points="series.points"
                     :period="series.period"
+                    :metric="calendarMetric"
                 />
             </SectionCard>
             <SectionCard
@@ -369,6 +533,8 @@ const exportUrl = computed(() =>
                 class="xl:col-span-2"
                 title="Where it burned"
                 description="Both sensors on the same 1 km grid for one day"
+                :download="`${fileStem}_map_${mapDate}`"
+                :download-note="mapDate ? formatDate(mapDate) : ''"
             >
                 <template #actions>
                     <input
@@ -434,5 +600,11 @@ const exportUrl = computed(() =>
                 </Deferred>
             </SectionCard>
         </div>
+
+        <p class="text-xs text-muted-foreground">
+            Data: NASA FIRMS · MODIS Collection 6.1 (Terra, Aqua) · VIIRS 375 m
+            (S-NPP, NOAA-20, NOAA-21) ·
+            <Link :href="methodPage()" class="underline">How it works</Link>
+        </p>
     </div>
 </template>

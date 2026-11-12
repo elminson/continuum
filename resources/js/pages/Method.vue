@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import SectionCard from '@/components/continuum/SectionCard.vue';
+import { formatNumber } from '@/lib/format';
 import { home, method } from '@/routes';
+import { show } from '@/routes/regions';
+import type { ValidationRow } from '@/types/continuum';
 
-defineProps<{
+const props = defineProps<{
     gridKm: number;
     calendarCellDeg: number;
     frpEdges: number[];
@@ -18,7 +22,43 @@ defineProps<{
         min_years: number;
         thresholds: { watch: number; warning: number; critical: number };
     };
+    validation: ValidationRow[];
+    thresholds: { small_sample_days: number; weak_r2: number };
 }>();
+
+const modisRows = computed(() =>
+    props.validation.filter((row) => row.reference === 'modis'),
+);
+
+const viirsRows = computed(() =>
+    props.validation.filter((row) => row.reference === 'viirs'),
+);
+
+function median(values: number[]): number | null {
+    if (values.length === 0) {
+        return null;
+    }
+
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+
+    return sorted.length % 2
+        ? sorted[mid]
+        : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+const viirsMedianR2 = computed(() =>
+    median(viirsRows.value.map((r) => r.r2 ?? 0)),
+);
+const modisMedianR2 = computed(() =>
+    median(modisRows.value.map((r) => r.r2 ?? 0)),
+);
+
+const ISSUE_LABELS: Record<ValidationRow['issues'][number], string> = {
+    small_sample: 'few overlap days',
+    weak_daily_fit: 'weak daily fit',
+    barely_beats_naive: 'barely beats naive',
+};
 
 defineOptions({
     layout: {
@@ -183,14 +223,118 @@ defineOptions({
                     naive merge is shown as such. The stored factor is then
                     refitted on all overlap days.
                 </p>
-                <p>
-                    On the bundled Gran Chaco sample (8 days, 4 platforms) the
-                    FRP threshold reduces daily error by more than 80% relative
-                    to the naive merge; the monthly ratio by about 75%.
-                    Multi-year backfills through the FIRMS Area API turn these
-                    small-sample numbers into per-month, per-region
-                    climatologies.
+            </div>
+
+            <div v-if="modisRows.length > 0" class="mt-4 overflow-x-auto">
+                <p class="mb-2 text-xs text-muted-foreground">
+                    Live held-out scores for every area you can see, monthly
+                    ratio, MODIS scale, weakest first. Daily error is in
+                    cell-days.
                 </p>
+                <table class="w-full text-xs tabular-nums">
+                    <thead class="text-left text-muted-foreground">
+                        <tr class="border-b border-border">
+                            <th class="py-1.5 pr-3 font-medium">Area</th>
+                            <th class="py-1.5 pr-3 text-right font-medium">
+                                Overlap days
+                            </th>
+                            <th class="py-1.5 pr-3 text-right font-medium">
+                                R²
+                            </th>
+                            <th class="py-1.5 pr-3 text-right font-medium">
+                                Error
+                            </th>
+                            <th class="py-1.5 pr-3 text-right font-medium">
+                                Naive error
+                            </th>
+                            <th class="py-1.5 pr-3 text-right font-medium">
+                                Better by
+                            </th>
+                            <th class="py-1.5 font-medium">Weakness</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="row in modisRows"
+                            :key="row.slug"
+                            class="border-b border-border/50"
+                        >
+                            <td class="py-1.5 pr-3">
+                                <Link
+                                    :href="show(row.slug)"
+                                    class="hover:underline"
+                                    >{{ row.region }}</Link
+                                >
+                            </td>
+                            <td class="py-1.5 pr-3 text-right">
+                                {{ formatNumber(row.overlap_days) }}
+                            </td>
+                            <td class="py-1.5 pr-3 text-right">
+                                {{ formatNumber(row.r2, 2) }}
+                            </td>
+                            <td class="py-1.5 pr-3 text-right">
+                                {{ formatNumber(row.mae, 1) }}
+                            </td>
+                            <td class="py-1.5 pr-3 text-right">
+                                {{ formatNumber(row.naive_mae, 1) }}
+                            </td>
+                            <td class="py-1.5 pr-3 text-right">
+                                {{
+                                    row.improvement === null
+                                        ? '—'
+                                        : `${Math.round(row.improvement * 100)}%`
+                                }}
+                            </td>
+                            <td class="py-1.5 text-muted-foreground">
+                                {{
+                                    row.issues
+                                        .map((issue) => ISSUE_LABELS[issue])
+                                        .join(', ') || '—'
+                                }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="prose prose-sm mt-4 max-w-none dark:prose-invert">
+                <h4>Where it works worst</h4>
+                <ul>
+                    <li>
+                        <strong>Small or low-fire areas.</strong> With only a
+                        handful of fires a day, one missed or extra pixel is a
+                        large share of the total, so daily R² falls below
+                        {{ thresholds.weak_r2 }}. Monthly and yearly totals are
+                        far steadier than single days.
+                    </li>
+                    <li>
+                        <strong>Short overlap.</strong> Areas with fewer than
+                        {{ thresholds.small_sample_days }} days where both
+                        sensors flew rest on a sample, not a record; fetch the
+                        full history before trusting their factors.
+                    </li>
+                    <li>
+                        <strong>VIIRS scale.</strong> Rebuilding VIIRS-like
+                        counts before 2012 is harder than the reverse: VIIRS
+                        sees small, cool fires that MODIS never recorded, so no
+                        factor can recover them<template
+                            v-if="
+                                viirsMedianR2 !== null && modisMedianR2 !== null
+                            "
+                        >
+                            (median R²
+                            {{ formatNumber(viirsMedianR2, 2) }} versus
+                            {{ formatNumber(modisMedianR2, 2) }} on the MODIS
+                            scale)</template
+                        >. MODIS scale is the default for this reason.
+                    </li>
+                    <li>
+                        <strong>Persistent cloud and smoke.</strong> Both
+                        sensors miss fires under cloud or thick smoke, and
+                        Continuum cannot tell a cloudy day from a day without
+                        fire.
+                    </li>
+                </ul>
             </div>
         </SectionCard>
 
@@ -254,6 +398,12 @@ defineOptions({
                     <li>
                         Rectangular areas only; areas crossing the antimeridian
                         are not supported.
+                    </li>
+                    <li>
+                        Colours are chosen to stay distinct under deuteranopia,
+                        protanopia and tritanopia: blue MODIS, orange VIIRS,
+                        green harmonized, and sequential ramps whose lightness
+                        rises with fire activity.
                     </li>
                     <li>
                         Terra's 10:30 overpass observes a different diurnal

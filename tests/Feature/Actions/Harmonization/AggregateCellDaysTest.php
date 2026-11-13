@@ -70,3 +70,11 @@ it('limits the aggregation to a date range and box when asked', function () {
         ->and(CellDay::query()->count())->toBe(1)
         ->and(CellDay::query()->sole()->latitude)->toBe(-25.0);
 });
+
+it('leaves unchanged cell-days alone on a re-run', function () {
+    $run = IngestRun::factory()->create();
+    Detection::factory()->for($run)->satellite(Satellite::Terra)->at(-25.0, -60.0, '2026-09-20')->frp(12)->create();
+
+    expect(app(AggregateCellDays::class)())->toBe(1)
+        ->and(app(AggregateCellDays::class)())->toBe(0);
+});

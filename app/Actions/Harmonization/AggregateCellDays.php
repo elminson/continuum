@@ -2,7 +2,6 @@
 
 namespace App\Actions\Harmonization;
 
-use App\Models\CellDay;
 use App\Support\Geo\BoundingBox;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -15,14 +14,21 @@ use Illuminate\Support\Facades\DB;
  */
 class AggregateCellDays
 {
-    public const int CHUNK = 1000;
-
     /**
      * Days aggregated per query. Detections are indexed by acq_date, so a
      * month-sized chunk keeps each query small while avoiding one round trip
      * per day across a 26-year record.
      */
     public const int CHUNK_DAYS = 31;
+
+    /** @var list<string> */
+    private const array UPDATED = ['instrument', 'calendar_cell_id', 'latitude', 'longitude', 'detections', 'day_detections', 'night_detections', 'low_confidence', 'nominal_confidence', 'high_confidence', 'frp_sum', 'frp_max', 'footprint_km2'];
+
+    /** @var list<string> */
+    private const array COLUMNS = ['cell_id', 'acq_date', 'satellite', ...self::UPDATED];
+
+    /** Same order as COLUMNS. */
+    private const string SELECT = "cell_id, acq_date, satellite, min(instrument), min(calendar_cell_id), round(avg(latitude)::numeric, 5), round(avg(longitude)::numeric, 5), count(*), count(*) filter (where daynight = 'D'), count(*) filter (where daynight = 'N'), count(*) filter (where confidence = 'low'), count(*) filter (where confidence = 'nominal'), count(*) filter (where confidence = 'high'), round(coalesce(sum(frp), 0)::numeric, 2), round(coalesce(max(frp), 0)::numeric, 2), round(coalesce(sum(footprint_km2), 0)::numeric, 4)";
 
     /**
      * @return int number of cell-day rows written
@@ -44,42 +50,26 @@ class AggregateCellDays
         while ($cursor->lte($last)) {
             $chunkEnd = $cursor->addDays(self::CHUNK_DAYS - 1)->min($last);
 
-            $rows = $this->filtered(DB::table('detections'), $cursor->toDateString(), $chunkEnd->toDateString(), $box)
-                ->selectRaw("cell_id, acq_date, satellite, min(instrument) as instrument, min(calendar_cell_id) as calendar_cell_id, avg(latitude) as latitude, avg(longitude) as longitude, count(*) as detections, sum(case when daynight = 'D' then 1 else 0 end) as day_detections, sum(case when daynight = 'N' then 1 else 0 end) as night_detections, sum(case when confidence = 'low' then 1 else 0 end) as low_confidence, sum(case when confidence = 'nominal' then 1 else 0 end) as nominal_confidence, sum(case when confidence = 'high' then 1 else 0 end) as high_confidence, sum(frp) as frp_sum, max(frp) as frp_max, sum(footprint_km2) as footprint_km2")
-                ->groupBy('cell_id', 'acq_date', 'satellite')
-                ->get();
+            $select = $this->filtered(DB::table('detections'), $cursor->toDateString(), $chunkEnd->toDateString(), $box)
+                ->selectRaw(self::SELECT)
+                ->groupBy('cell_id', 'acq_date', 'satellite');
 
-            foreach ($rows->chunk(self::CHUNK) as $chunk) {
-                $payload = $chunk->map(fn (object $row) => [
-                    'cell_id' => (int) $row->cell_id,
-                    'acq_date' => substr((string) $row->acq_date, 0, 10),
-                    'satellite' => $row->satellite,
-                    'instrument' => $row->instrument,
-                    'calendar_cell_id' => (int) $row->calendar_cell_id,
-                    'latitude' => round((float) $row->latitude, 5),
-                    'longitude' => round((float) $row->longitude, 5),
-                    'detections' => (int) $row->detections,
-                    'day_detections' => (int) $row->day_detections,
-                    'night_detections' => (int) $row->night_detections,
-                    'low_confidence' => (int) $row->low_confidence,
-                    'nominal_confidence' => (int) $row->nominal_confidence,
-                    'high_confidence' => (int) $row->high_confidence,
-                    'frp_sum' => round((float) $row->frp_sum, 2),
-                    'frp_max' => round((float) $row->frp_max, 2),
-                    'footprint_km2' => round((float) $row->footprint_km2, 4),
-                ])->all();
+            // Aggregate and upsert inside Postgres: a month of global feeds is
+            // millions of groups, far too many to pull into PHP. Rows whose
+            // totals did not change are left alone, which keeps re-runs cheap.
+            $rows = DB::affectingStatement(
+                'insert into cell_days ('.implode(', ', self::COLUMNS).') '.$select->toSql()
+                .' on conflict (cell_id, acq_date, satellite) do update set '
+                .implode(', ', array_map(fn (string $column) => "{$column} = excluded.{$column}", self::UPDATED))
+                .' where ('.implode(', ', array_map(fn (string $column) => "cell_days.{$column}", self::UPDATED)).')'
+                .' is distinct from ('.implode(', ', array_map(fn (string $column) => "excluded.{$column}", self::UPDATED)).')',
+                $select->getBindings(),
+            );
 
-                CellDay::query()->upsert(
-                    $payload,
-                    ['cell_id', 'acq_date', 'satellite'],
-                    ['instrument', 'calendar_cell_id', 'latitude', 'longitude', 'detections', 'day_detections', 'night_detections', 'low_confidence', 'nominal_confidence', 'high_confidence', 'frp_sum', 'frp_max', 'footprint_km2'],
-                );
-
-                $written += count($payload);
-            }
+            $written += $rows;
 
             if ($onChunk !== null) {
-                $onChunk($cursor->toDateString(), $chunkEnd->toDateString(), $rows->count());
+                $onChunk($cursor->toDateString(), $chunkEnd->toDateString(), $rows);
             }
 
             $cursor = $chunkEnd->addDay();

@@ -36,7 +36,10 @@ const option = computed(() => ({
         type: 'value',
         name: t('daily error (cell-days)'),
         nameTextStyle: { color: theme.muted.value, align: 'left' },
-        axisLabel: { color: theme.muted.value },
+        axisLabel: {
+            color: theme.muted.value,
+            formatter: (value: number) => formatNumber(value, 2),
+        },
         splitLine: { lineStyle: { color: theme.grid.value } },
     },
     series: [

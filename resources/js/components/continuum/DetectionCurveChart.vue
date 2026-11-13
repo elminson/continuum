@@ -50,7 +50,10 @@ const option = computed(() => {
             {
                 type: 'value',
                 name: t('VIIRS cell-days'),
-                axisLabel: { color: theme.muted.value },
+                axisLabel: {
+                    color: theme.muted.value,
+                    formatter: (value: number) => formatNumber(value, 2),
+                },
                 splitLine: { show: false },
             },
         ],

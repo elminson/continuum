@@ -64,7 +64,7 @@ class CalendarController extends Controller
                 'to' => $to,
             ],
             'options' => [
-                'periods' => array_map(fn (CalendarPeriod $p) => ['value' => $p->value, 'label' => ucfirst($p->value)], CalendarPeriod::cases()),
+                'periods' => array_map(fn (CalendarPeriod $p) => ['value' => $p->value, 'label' => __(ucfirst($p->value))], CalendarPeriod::cases()),
                 'methods' => array_map(fn (HarmonizationMethod $m) => ['value' => $m->value, 'label' => $m->label(), 'description' => $m->description()], HarmonizationMethod::cases()),
                 'references' => array_map(fn (ReferenceSensor $r) => ['value' => $r->value, 'label' => $r->label()], ReferenceSensor::cases()),
             ],

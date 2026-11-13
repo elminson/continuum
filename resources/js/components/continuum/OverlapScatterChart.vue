@@ -32,7 +32,10 @@ const option = computed(() => {
             nameLocation: 'middle',
             nameGap: 28,
             max,
-            axisLabel: { color: theme.muted.value },
+            axisLabel: {
+                color: theme.muted.value,
+                formatter: (value: number) => formatNumber(value, 2),
+            },
             splitLine: { lineStyle: { color: theme.grid.value } },
         },
         yAxis: {
@@ -41,7 +44,10 @@ const option = computed(() => {
             nameLocation: 'middle',
             nameGap: 48,
             max,
-            axisLabel: { color: theme.muted.value },
+            axisLabel: {
+                color: theme.muted.value,
+                formatter: (value: number) => formatNumber(value, 2),
+            },
             splitLine: { lineStyle: { color: theme.grid.value } },
         },
         series: [

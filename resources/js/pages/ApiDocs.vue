@@ -138,17 +138,5 @@ curl -o calendar.csv "{{ baseUrl }}/regions/{{ exampleSlug }}/export?period=week
                 >.
             </p>
         </SectionCard>
-
-        <SectionCard :title="$t('Run your own copy')">
-            <pre
-                class="overflow-x-auto rounded-md bg-muted p-3 text-xs"
-            ><code>composer run setup            # install, .env, key, migrate, npm build
-php artisan continuum:demo    # load bundled NASA samples and harmonize four regions
-composer run dev              # http://localhost:8000
-
-# optional, multi-year record (free key: https://firms.modaps.eosdis.nasa.gov/api/map_key/)
-FIRMS_MAP_KEY=... php artisan firms:backfill gran-chaco --from=2012-01-20
-php artisan queue:work</code></pre>
-        </SectionCard>
     </div>
 </template>

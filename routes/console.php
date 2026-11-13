@@ -17,7 +17,9 @@ Schedule::command('firms:ingest-public --presets --window='.config('continuum.sc
     ->withoutOverlapping()
     ->onOneServer();
 
-Schedule::command('continuum:harmonize')
+Schedule::command('continuum:harmonize', [
+    '--from' => now()->subDays((int) config('continuum.schedule.harmonize_lookback_days', 3))->toDateString(),
+])
     ->cron((string) config('continuum.schedule.harmonize_cron', '25 * * * *'))
     ->timezone('UTC')
     ->runInBackground()

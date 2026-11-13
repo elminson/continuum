@@ -41,6 +41,8 @@ return [
         'ingest_public_window' => env('CONTINUUM_INGEST_PUBLIC_WINDOW', '24h'),
         // Fold whatever arrived into the calendars shortly after each pull.
         'harmonize_cron' => env('CONTINUUM_HARMONIZE_CRON', '25 * * * *'),
+        // Only re-aggregate the last few days: the hourly pulls never reach further back.
+        'harmonize_lookback_days' => (int) env('CONTINUUM_HARMONIZE_LOOKBACK_DAYS', 3),
         // Ask the alert analyst to read new or changed unusual periods after each harmonization.
         'triage_cron' => env('CONTINUUM_TRIAGE_CRON', '50 * * * *'),
     ],

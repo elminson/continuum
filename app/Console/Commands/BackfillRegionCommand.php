@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Actions\Harmonization\RefreshRegion;
 use App\Actions\Ingestion\IngestDetections;
 use App\Actions\Ingestion\PurgeNearRealTime;
 use App\Enums\FirmsSource;
@@ -70,7 +69,7 @@ class BackfillRegionCommand extends Command
             $bar = $this->output->createProgressBar(count($jobs));
 
             foreach ($jobs as $job) {
-                $job->handle($client, app(CsvParser::class), app(IngestDetections::class), app(PurgeNearRealTime::class), app(RefreshRegion::class));
+                $job->handle($client, app(CsvParser::class), app(IngestDetections::class), app(PurgeNearRealTime::class));
                 $bar->advance();
             }
 

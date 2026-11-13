@@ -204,7 +204,10 @@ const option = computed(() => {
                 align: 'left',
                 padding: [0, 0, 6, -48],
             },
-            axisLabel: { color: theme.muted.value },
+            axisLabel: {
+                color: theme.muted.value,
+                formatter: (value: number) => formatNumber(value, 2),
+            },
             splitLine: { lineStyle: { color: theme.grid.value } },
         },
         dataZoom:

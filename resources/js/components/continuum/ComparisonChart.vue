@@ -42,7 +42,10 @@ const option = computed(() => {
         },
         yAxis: {
             type: 'value',
-            axisLabel: { color: theme.muted.value },
+            axisLabel: {
+                color: theme.muted.value,
+                formatter: (value: number) => formatNumber(value, 2),
+            },
             splitLine: { lineStyle: { color: theme.grid.value } },
         },
         series: [

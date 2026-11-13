@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\Harmonization\RefreshRegion;
 use App\Actions\Ingestion\IngestDetections;
 use App\Actions\Ingestion\PurgeNearRealTime;
 use App\Enums\FirmsSource;
@@ -16,6 +15,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     CarbonImmutable::setTestNow('2026-09-27 12:00:00');
@@ -128,7 +128,6 @@ it('handles window jobs serialized before the fetch box existed', function () {
         app(CsvParser::class),
         app(IngestDetections::class),
         app(PurgeNearRealTime::class),
-        app(RefreshRegion::class),
     );
 
     Http::assertSent(fn ($request) => str_contains($request->url(), '/-71,17,-67,20/'));
@@ -150,4 +149,20 @@ it('reads the unfinished batches of many areas in one query', function () {
     expect(DB::getQueryLog())->toHaveCount(1)
         ->and($active)->toHaveKey($busy->id)->not->toHaveKey($idle->id)
         ->and($active[$busy->id])->toMatchArray(['total' => 2, 'done' => 0]);
+});
+
+it('hands the milestone re-harmonization to its own job instead of running it inside the window', function () {
+    Queue::fake();
+    Http::fake(['*' => Http::response("latitude,longitude,brightness,scan,track,acq_date,acq_time,satellite,confidence,version,bright_t31,frp,daynight\n")]);
+    config()->set('continuum.firms.map_key', 'test-key');
+    $region = Region::factory()->preset()->create();
+
+    // 19 windows done: this one is the 20th, an early refresh milestone.
+    [$job] = (new BackfillRegionWindowJob($region->id, FirmsSource::ModisSp, '2026-01-01', 5))
+        ->withFakeBatch(totalJobs: 100, pendingJobs: 81);
+
+    $job->handle(app(AreaApiClient::class), app(CsvParser::class), app(IngestDetections::class), app(PurgeNearRealTime::class));
+
+    Queue::assertPushed(HarmonizeRegionJob::class, fn (HarmonizeRegionJob $queued) => $queued->regionId === $region->id);
+    expect($region->refresh()->harmonized_at)->toBeNull();
 });

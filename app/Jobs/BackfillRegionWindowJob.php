@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Actions\Harmonization\RefreshRegion;
 use App\Actions\Ingestion\IngestDetections;
 use App\Actions\Ingestion\PurgeNearRealTime;
 use App\Enums\FirmsSource;
@@ -61,7 +60,7 @@ class BackfillRegionWindowJob implements ShouldQueue
         return CarbonImmutable::now()->addDays(3);
     }
 
-    public function handle(AreaApiClient $client, CsvParser $parser, IngestDetections $ingest, PurgeNearRealTime $purge, RefreshRegion $refresh): void
+    public function handle(AreaApiClient $client, CsvParser $parser, IngestDetections $ingest, PurgeNearRealTime $purge): void
     {
         if ($this->batch()?->cancelled()) {
             return;
@@ -99,8 +98,10 @@ class BackfillRegionWindowJob implements ShouldQueue
 
         $ingest($parser->parseString($csv, $box), $run, $parser->rowsSkipped);
 
+        // Re-harmonizing a whole region can take far longer than one window,
+        // so it runs as its own (unique) job instead of inside this one.
         if ($this->reachedRefreshMilestone()) {
-            $refresh($region);
+            HarmonizeRegionJob::dispatch($region->id);
         }
     }
 

@@ -14,6 +14,7 @@ use App\Services\Firms\BackfillPlanner;
 use App\Services\Firms\CsvParser;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
@@ -131,4 +132,22 @@ it('handles window jobs serialized before the fetch box existed', function () {
     );
 
     Http::assertSent(fn ($request) => str_contains($request->url(), '/-71,17,-67,20/'));
+});
+
+it('reads the unfinished batches of many areas in one query', function () {
+    config()->set('queue.default', 'database');
+    $planner = app(BackfillPlanner::class);
+    $busy = Region::factory()->preset()->create(['slug' => 'busy-area']);
+    $idle = Region::factory()->preset()->create(['slug' => 'idle-area']);
+
+    $planner->dispatch($busy, $planner->windows($busy, [FirmsSource::ModisSp], '2026-01-01', '2026-01-10'));
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $active = $planner->activeBatches([$busy, $idle]);
+    DB::disableQueryLog();
+
+    expect(DB::getQueryLog())->toHaveCount(1)
+        ->and($active)->toHaveKey($busy->id)->not->toHaveKey($idle->id)
+        ->and($active[$busy->id])->toMatchArray(['total' => 2, 'done' => 0]);
 });

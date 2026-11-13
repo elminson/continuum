@@ -67,8 +67,10 @@ class IngestionController extends Controller
             ->get()
             ->keyBy('status');
 
+        $active = $planner->activeBatches($regions);
+
         $batches = $regions
-            ->map(fn (Region $region) => ($batch = $planner->activeBatch($region)) === null ? null : [
+            ->map(fn (Region $region) => ($batch = $active[$region->id] ?? null) === null ? null : [
                 ...$batch,
                 'percent' => $batch['total'] > 0 ? round(100 * $batch['done'] / $batch['total'], 1) : 0.0,
                 'region' => $region->only(['slug', 'name', 'color']),

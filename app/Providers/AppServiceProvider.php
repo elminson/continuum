@@ -6,6 +6,7 @@ use App\Jobs\HarmonizeRegionJob;
 use App\Services\Firms\BackfillPlanner;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,10 @@ class AppServiceProvider extends ServiceProvider
         if (app()->isProduction()) {
             URL::forceScheme('https');
         }
+
+        // Outside production, a relation read without eager loading throws,
+        // so an N+1 query fails the tests instead of slowing a page.
+        Model::preventLazyLoading(! app()->isProduction());
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),

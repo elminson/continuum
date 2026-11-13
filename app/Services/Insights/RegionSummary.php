@@ -62,30 +62,36 @@ class RegionSummary
             ->get();
 
         $byInstrument = $daily->groupBy(fn (CalendarEntry $entry) => $entry->instrument->value);
-        $first = CalendarEntry::query()->where('region_id', $region->id)->where('period', 'day')->min('period_start');
+        $range = CalendarEntry::query()
+            ->where('region_id', $region->id)
+            ->where('period', CalendarPeriod::Day->value)
+            ->selectRaw('min(period_start) as first_date, max(period_start) filter (where cell_days > 0) as last_active')
+            ->toBase()
+            ->first();
+        $first = $range->first_date ?? null;
+        $lastActive = $range->last_active ?? null;
         $last = $daily->max(fn (CalendarEntry $entry) => $entry->period_start->toDateString());
 
-        $factor = CalibrationFactor::query()
+        $factors = CalibrationFactor::query()
             ->where('region_id', $region->id)
-            ->where('method', HarmonizationMethod::FrpThreshold->value)
+            ->whereIn('method', [HarmonizationMethod::FrpThreshold->value, HarmonizationMethod::Ratio->value])
             ->where('reference', ReferenceSensor::Modis->value)
             ->where('month', CalibrationFactor::ALL_YEAR)
-            ->first();
+            ->get()
+            ->keyBy(fn (CalibrationFactor $factor) => $factor->method->value);
 
-        $ratio = CalibrationFactor::query()
-            ->where('region_id', $region->id)
-            ->where('method', HarmonizationMethod::Ratio->value)
-            ->where('reference', ReferenceSensor::Modis->value)
-            ->where('month', CalibrationFactor::ALL_YEAR)
-            ->first();
+        $factor = $factors->get(HarmonizationMethod::FrpThreshold->value);
+        $ratio = $factors->get(HarmonizationMethod::Ratio->value);
 
         $recent = $this->calendar->series($region, CalendarPeriod::Day, HarmonizationMethod::Ratio, ReferenceSensor::Modis, from: now()->subDays(30)->toDateString());
 
-        $lastActive = CalendarEntry::query()
+        // The strongest alert, with the region's alert count riding along.
+        $topAlert = Alert::query()
             ->where('region_id', $region->id)
-            ->where('period', CalendarPeriod::Day->value)
-            ->where('cell_days', '>', 0)
-            ->max('period_start');
+            ->select('period_start', 'severity', 'message', 'z_score')
+            ->selectRaw('count(*) over () as alert_count')
+            ->orderByDesc('z_score')
+            ->first();
 
         return [
             'first_date' => $first === null ? null : substr((string) $first, 0, 10),
@@ -105,8 +111,8 @@ class RegionSummary
                 'frp_threshold_mw' => $factor?->value,
                 'mae_improvement' => $factor?->validation['mae_improvement'] ?? $ratio?->validation['mae_improvement'] ?? null,
             ],
-            'alerts' => Alert::query()->where('region_id', $region->id)->count(),
-            'top_alert' => Alert::query()->where('region_id', $region->id)->orderByDesc('z_score')->first()?->only(['period_start', 'severity', 'message', 'z_score']),
+            'alerts' => (int) ($topAlert?->getAttribute('alert_count') ?? 0),
+            'top_alert' => $topAlert?->only(['period_start', 'severity', 'message', 'z_score']),
         ];
     }
 

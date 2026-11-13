@@ -136,3 +136,22 @@ it('labels every kind of ingest source for humans', function () {
         ->and($intake->sourceLabel('public:modis:24h'))->toBe('Public feed · MODIS C6.1 (Terra + Aqua) · 24h')
         ->and($intake->sourceLabel('file:whatever.csv'))->toBe('CSV import');
 });
+
+it('builds the intake in the same number of queries however many areas there are', function () {
+    $queries = function (int $areas): int {
+        Region::factory()->preset()->count($areas)->create()->each(fn (Region $region) => IngestRun::factory()->create([
+            'region_id' => $region->id,
+            'status' => IngestStatus::Failed,
+            'error' => 'FIRMS returned 503',
+        ]));
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        app(DataIntake::class)->build();
+        DB::disableQueryLog();
+
+        return count(DB::getQueryLog());
+    };
+
+    expect($queries(1))->toBe($queries(5));
+});

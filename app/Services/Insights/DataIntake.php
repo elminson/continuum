@@ -61,7 +61,45 @@ class DataIntake
         /** @var list<int> $regionIds */
         $regionIds = $regions->pluck('id')->values()->all();
 
-        $areas = array_values($regions->map(fn (Region $region): array => $this->area($region))->all());
+        $stats = IngestRun::query()
+            ->whereIn('region_id', $regionIds)
+            ->select('region_id')
+            ->selectRaw("count(*) filter (where status = 'completed') as completed")
+            ->selectRaw("count(*) filter (where status = 'failed') as failed")
+            ->selectRaw("count(*) filter (where status = 'running') as running")
+            ->selectRaw('coalesce(sum(rows_read), 0) as rows_read')
+            ->selectRaw('coalesce(sum(rows_inserted), 0) as rows_inserted')
+            ->selectRaw('coalesce(sum(rows_skipped), 0) as rows_skipped')
+            ->selectRaw("coalesce(sum(rows_inserted) filter (where instrument = 'modis'), 0) as modis_rows")
+            ->selectRaw("coalesce(sum(rows_inserted) filter (where instrument = 'viirs'), 0) as viirs_rows")
+            ->selectRaw('min(date_from) as first_date')
+            ->selectRaw('max(date_to) as last_date')
+            ->selectRaw('max(started_at) as last_started_at')
+            ->selectRaw('max(finished_at) as last_finished_at')
+            ->groupBy('region_id')
+            ->toBase()
+            ->get()
+            ->keyBy('region_id');
+
+        // Latest failure per area: Postgres DISTINCT ON keeps the first row of
+        // each region in the given order.
+        $lastErrors = IngestRun::query()
+            ->whereIn('region_id', $regionIds)
+            ->where('status', IngestStatus::Failed->value)
+            ->selectRaw('distinct on (region_id) region_id, error')
+            ->orderBy('region_id')
+            ->orderByDesc('started_at')
+            ->toBase()
+            ->pluck('error', 'region_id');
+
+        $batches = $this->planner->activeBatches($regions);
+
+        $areas = array_values($regions->map(fn (Region $region): array => $this->area(
+            $region,
+            $stats->get($region->id),
+            $lastErrors->get($region->id),
+            $batches[$region->id] ?? null,
+        ))->all());
         $public = $this->publicFeeds();
         $recent = $this->recentRuns($regionIds);
 
@@ -96,34 +134,11 @@ class DataIntake
     }
 
     /**
+     * @param  array{id: string, total: int, done: int, failed: int, started_at: string}|null  $backfill
      * @return array<string, mixed>
      */
-    private function area(Region $region): array
+    private function area(Region $region, ?object $stats, ?string $lastError, ?array $backfill): array
     {
-        $stats = IngestRun::query()
-            ->where('region_id', $region->id)
-            ->selectRaw("count(*) filter (where status = 'completed') as completed")
-            ->selectRaw("count(*) filter (where status = 'failed') as failed")
-            ->selectRaw("count(*) filter (where status = 'running') as running")
-            ->selectRaw('coalesce(sum(rows_read), 0) as rows_read')
-            ->selectRaw('coalesce(sum(rows_inserted), 0) as rows_inserted')
-            ->selectRaw('coalesce(sum(rows_skipped), 0) as rows_skipped')
-            ->selectRaw("coalesce(sum(rows_inserted) filter (where instrument = 'modis'), 0) as modis_rows")
-            ->selectRaw("coalesce(sum(rows_inserted) filter (where instrument = 'viirs'), 0) as viirs_rows")
-            ->selectRaw('min(date_from) as first_date')
-            ->selectRaw('max(date_to) as last_date')
-            ->selectRaw('max(started_at) as last_started_at')
-            ->selectRaw('max(finished_at) as last_finished_at')
-            ->first();
-
-        $lastError = IngestRun::query()
-            ->where('region_id', $region->id)
-            ->where('status', IngestStatus::Failed->value)
-            ->orderByDesc('started_at')
-            ->value('error');
-
-        $backfill = $this->planner->activeBatch($region);
-
         if ($backfill !== null) {
             $backfill['percent'] = $backfill['total'] > 0 ? round(100 * $backfill['done'] / $backfill['total'], 1) : 0.0;
         }

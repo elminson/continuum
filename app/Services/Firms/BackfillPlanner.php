@@ -211,24 +211,51 @@ class BackfillPlanner
      */
     public function activeBatch(Region $region): ?array
     {
-        $batch = DB::table('job_batches')
-            ->where('name', self::batchName($region))
+        return $this->activeBatches([$region])[$region->id] ?? null;
+    }
+
+    /**
+     * Unfinished backfill batches for many regions in one query, keyed by
+     * region id; regions without one are left out.
+     *
+     * @param  iterable<Region>  $regions
+     * @return array<int, array{id: string, total: int, done: int, failed: int, started_at: string}>
+     */
+    public function activeBatches(iterable $regions): array
+    {
+        $byName = [];
+
+        foreach ($regions as $region) {
+            $byName[self::batchName($region)] = $region->id;
+        }
+
+        if ($byName === []) {
+            return [];
+        }
+
+        $active = [];
+
+        // Newest first, so the first batch seen per name wins.
+        $batches = DB::table('job_batches')
+            ->whereIn('name', array_keys($byName))
             ->whereNull('finished_at')
             ->whereNull('cancelled_at')
             ->orderByDesc('created_at')
-            ->first();
+            ->get();
 
-        if ($batch === null) {
-            return null;
+        foreach ($batches as $batch) {
+            $regionId = $byName[$batch->name];
+
+            $active[$regionId] ??= [
+                'id' => (string) $batch->id,
+                'total' => (int) $batch->total_jobs,
+                'done' => (int) $batch->total_jobs - (int) $batch->pending_jobs,
+                'failed' => (int) $batch->failed_jobs,
+                'started_at' => CarbonImmutable::createFromTimestamp((int) $batch->created_at)->toIso8601String(),
+            ];
         }
 
-        return [
-            'id' => (string) $batch->id,
-            'total' => (int) $batch->total_jobs,
-            'done' => (int) $batch->total_jobs - (int) $batch->pending_jobs,
-            'failed' => (int) $batch->failed_jobs,
-            'started_at' => CarbonImmutable::createFromTimestamp((int) $batch->created_at)->toIso8601String(),
-        ];
+        return $active;
     }
 
     public static function batchName(Region $region): string

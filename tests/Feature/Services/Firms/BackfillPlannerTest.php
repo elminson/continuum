@@ -47,7 +47,8 @@ it('plans the full history newest first with a near-real-time tail', function ()
     expect($froms)->toBe(array_reverse(collect($froms)->sort()->values()->all()))
         ->and($froms[0])->toBe('2026-09-26')
         ->and(end($froms))->toBe('2000-11-01')
-        ->and($sources)->toContain('MODIS_NRT', 'VIIRS_NOAA21_NRT', 'MODIS_SP', 'VIIRS_SNPP_SP', 'VIIRS_NOAA20_SP');
+        ->and($sources)->toContain('MODIS_NRT', 'VIIRS_NOAA21_NRT', 'MODIS_SP', 'VIIRS_SNPP_SP', 'VIIRS_NOAA20_SP')
+        ->and($sources)->not->toContain('VIIRS_SNPP_NRT');
 });
 
 it('dispatches one named batch that harmonizes the region when finished', function () {

@@ -14,6 +14,16 @@ enum PublicFeed: string
     case ViirsNoaa20 = 'viirs-noaa20';
     case ViirsNoaa21 = 'viirs-noaa21';
 
+    /**
+     * Feeds still receiving observations (Suomi NPP stopped on 2026-11-02).
+     *
+     * @return list<self>
+     */
+    public static function active(): array
+    {
+        return [self::Modis, self::ViirsNoaa20, self::ViirsNoaa21];
+    }
+
     public function instrument(): Instrument
     {
         return $this === self::Modis ? Instrument::Modis : Instrument::Viirs;

@@ -55,12 +55,12 @@ enum FirmsSource: string
 
     /**
      * Near-real-time sources, which cover the weeks the archive has not
-     * reached yet.
+     * reached yet. Suomi NPP stopped delivering observations on 2026-11-02.
      *
      * @return list<self>
      */
     public static function nrtSources(): array
     {
-        return [self::ModisNrt, self::ViirsSnppNrt, self::ViirsNoaa20Nrt, self::ViirsNoaa21Nrt];
+        return [self::ModisNrt, self::ViirsNoaa20Nrt, self::ViirsNoaa21Nrt];
     }
 }

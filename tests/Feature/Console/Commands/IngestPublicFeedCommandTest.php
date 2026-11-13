@@ -53,3 +53,15 @@ it('fails when the feed does not look like a FIRMS CSV', function () {
 
     expect(Detection::query()->count())->toBe(0);
 })->throws(FirmsException::class);
+
+it('skips the retired Suomi NPP feed by default', function () {
+    Http::preventStrayRequests();
+    Http::fake([
+        'firms.modaps.eosdis.nasa.gov/*' => Http::response((string) file_get_contents(base_path('tests/Fixtures/modis_sample.csv'))),
+    ]);
+
+    $this->artisan('firms:ingest-public', ['--window' => '24h'])->assertSuccessful();
+
+    Http::assertSentCount(3);
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), 'suomi-npp'));
+});

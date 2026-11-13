@@ -15,7 +15,7 @@ use Throwable;
 class IngestPublicFeedCommand extends Command
 {
     protected $signature = 'firms:ingest-public
-        {--feed=* : Feeds to ingest: modis, viirs-snpp, viirs-noaa20, viirs-noaa21 (default: all)}
+        {--feed=* : Feeds to ingest: modis, viirs-snpp, viirs-noaa20, viirs-noaa21 (default: modis, viirs-noaa20, viirs-noaa21)}
         {--window=24h : 24h, 48h or 7d}
         {--bbox= : Keep only detections inside west,south,east,north}
         {--presets : Keep only detections inside the preset regions (union of their boxes)}
@@ -34,7 +34,7 @@ class IngestPublicFeedCommand extends Command
         }
 
         $feeds = $this->option('feed') === []
-            ? PublicFeed::cases()
+            ? PublicFeed::active()
             : array_map(fn ($feed) => PublicFeed::from((string) $feed), (array) $this->option('feed'));
 
         $clip = $this->clip();

@@ -25,11 +25,11 @@ const { isCurrentUrl } = useCurrentUrl();
                 <SidebarMenuButton
                     as-child
                     :is-active="isCurrentUrl(item.href)"
-                    :tooltip="item.title"
+                    :tooltip="$t(item.title)"
                 >
                     <Link :href="item.href">
                         <component :is="item.icon" />
-                        <span>{{ item.title }}</span>
+                        <span>{{ $t(item.title) }}</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>

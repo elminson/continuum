@@ -41,10 +41,24 @@ const CAUSE_SHORT: Record<string, string> = {
                 </p>
                 <p class="text-xs text-muted-foreground">
                     z = {{ formatNumber(alert.z_score, 1) }} ·
-                    {{ formatNumber(alert.percentile, 0) }}th percentile ·
-                    expected {{ formatNumber(alert.expected) }} ±
-                    {{ formatNumber(alert.spread) }} · {{ alert.method }} /
-                    {{ alert.reference }}-equivalent
+                    {{
+                        $t(':valueth percentile', {
+                            value: formatNumber(alert.percentile, 0),
+                        })
+                    }}
+                    ·
+                    {{
+                        $t('expected :value ± :spread', {
+                            value: formatNumber(alert.expected),
+                            spread: formatNumber(alert.spread),
+                        })
+                    }}
+                    · {{ alert.method }} /
+                    {{
+                        $t(':reference-equivalent', {
+                            reference: alert.reference,
+                        })
+                    }}
                 </p>
                 <div
                     v-if="alert.triage"
@@ -53,15 +67,22 @@ const CAUSE_SHORT: Record<string, string> = {
                     <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span
                             class="inline-flex items-center gap-1 font-medium text-lime-700 dark:text-lime-400"
-                            :title="`Advisory reading by ${alert.triage.model}, a self-hosted model. It never changes the statistics.`"
+                            :title="
+                                $t(
+                                    'Advisory reading by :model, a self-hosted model. It never changes the statistics.',
+                                    { model: alert.triage.model },
+                                )
+                            "
                         >
-                            <Sparkles class="size-3" /> AI reading
+                            <Sparkles class="size-3" /> {{ $t('AI reading') }}
                         </span>
                         <span>
-                            Likely
+                            {{ $t('Likely') }}
                             <span class="font-medium">{{
-                                CAUSE_SHORT[alert.triage.cause] ??
-                                alert.triage.cause
+                                $t(
+                                    CAUSE_SHORT[alert.triage.cause] ??
+                                        alert.triage.cause,
+                                )
                             }}</span>
                         </span>
                         <span
@@ -75,14 +96,17 @@ const CAUSE_SHORT: Record<string, string> = {
                         <span
                             v-if="alert.triage.baseline_reliable === false"
                             class="text-amber-600 dark:text-amber-400"
-                            >Thin baseline</span
+                            >{{ $t('Thin baseline') }}</span
                         >
                         <span
                             v-else-if="alert.triage.artifact_probability >= 0.5"
                             class="text-amber-600 dark:text-amber-400"
-                            >Artifact risk
-                            {{
-                                formatPercent(alert.triage.artifact_probability)
+                            >{{
+                                $t('Artifact risk :value', {
+                                    value: formatPercent(
+                                        alert.triage.artifact_probability,
+                                    ),
+                                })
                             }}</span
                         >
                     </p>
@@ -97,15 +121,19 @@ const CAUSE_SHORT: Record<string, string> = {
             <Link
                 :href="alertShow(alert.id)"
                 class="inline-flex shrink-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
-                :aria-label="`Open the map of ${alert.message}`"
+                :aria-label="
+                    $t('Open the map of :message', { message: alert.message })
+                "
             >
-                <MapPinned class="size-3.5" /> Map
+                <MapPinned class="size-3.5" /> {{ $t('Map') }}
             </Link>
         </li>
     </ul>
     <p v-else class="text-sm text-muted-foreground">
-        No unusual periods flagged. Anomaly screening needs at least three years
-        of harmonized data for the same week or month; backfill the archive to
-        enable it.
+        {{
+            $t(
+                'No unusual periods flagged. Anomaly screening needs at least three years of harmonized data for the same week or month; backfill the archive to enable it.',
+            )
+        }}
     </p>
 </template>

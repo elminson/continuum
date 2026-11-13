@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\Locale;
 use App\Models\Region;
 use App\Services\Insights\DataIntake;
 use App\Services\Insights\EngineeringShowcase;
@@ -17,9 +18,19 @@ class WarmCacheCommand extends Command
     public function handle(RegionSummary $summary, DataIntake $intake, EngineeringShowcase $showcase): int
     {
         $this->components->task('Global summary', fn () => $summary->refreshGlobal());
-        $this->components->task('Area summaries', fn () => Region::query()->each(fn (Region $region) => $summary->for($region)));
-        $this->components->task('Data intake', fn () => $intake->refresh());
-        $this->components->task('How it works', fn () => $showcase->refresh());
+
+        // Area cards, intake and showcase carry translated text: warm each language.
+        $original = app()->getLocale();
+
+        foreach (Locale::cases() as $locale) {
+            app()->setLocale($locale->value);
+
+            $this->components->task("Area summaries ({$locale->value})", fn () => Region::query()->each(fn (Region $region) => $summary->for($region)));
+            $this->components->task("Data intake ({$locale->value})", fn () => $intake->refresh());
+            $this->components->task("How it works ({$locale->value})", fn () => $showcase->refresh());
+        }
+
+        app()->setLocale($original);
 
         return self::SUCCESS;
     }

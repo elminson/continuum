@@ -23,8 +23,8 @@ enum ReferenceSensor: string
     public function label(): string
     {
         return match ($this) {
-            self::Modis => 'MODIS-equivalent (26-year baseline)',
-            self::Viirs => 'VIIRS-equivalent (modern sensitivity)',
+            self::Modis => __('MODIS-equivalent (26-year baseline)'),
+            self::Viirs => __('VIIRS-equivalent (modern sensitivity)'),
         };
     }
 }

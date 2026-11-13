@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use App\Enums\Locale;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
@@ -18,6 +19,7 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'locale' => ['sometimes', 'nullable', Rule::enum(Locale::class)],
         ];
     }
 

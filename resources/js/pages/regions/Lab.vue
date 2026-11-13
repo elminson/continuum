@@ -71,63 +71,72 @@ const best = computed(() =>
 </script>
 
 <template>
-    <Head :title="`Lab · ${region.name}`" />
+    <Head :title="$t('Lab · :name', { name: region.name })" />
 
     <div class="flex flex-col gap-4 p-4">
         <header class="flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h1 class="text-xl font-semibold">
-                    Harmonization lab · {{ region.name }}
+                    {{ $t('Harmonization lab · :name', { name: region.name }) }}
                 </h1>
                 <p class="max-w-3xl text-sm text-muted-foreground">
-                    Everything on this page is computed from the days both
-                    instruments observed the area. It shows why a naive merge
-                    fails, how each transfer function is fitted, and how well it
-                    does on days it never saw.
+                    {{
+                        $t(
+                            'Everything on this page is computed from the days both instruments observed the area. It shows why a naive merge fails, how each transfer function is fitted, and how well it does on days it never saw.',
+                        )
+                    }}
                 </p>
             </div>
             <Button variant="outline" size="sm" as-child>
                 <Link :href="show(region.slug)"
-                    ><ArrowLeft class="size-4" /> Calendar</Link
+                    ><ArrowLeft class="size-4" /> {{ $t('Calendar') }}</Link
                 >
             </Button>
         </header>
 
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <KpiTile
-                label="Overlap days"
+                :label="$t('Overlap days')"
                 :value="String(pairs.length)"
-                hint="days with both MODIS and VIIRS coverage"
+                :hint="$t('days with both MODIS and VIIRS coverage')"
             />
             <KpiTile
-                label="VIIRS ÷ MODIS cell-days"
+                :label="$t('VIIRS ÷ MODIS cell-days')"
                 :value="
                     sums.modis > 0
                         ? `×${formatNumber(sums.viirs / sums.modis, 2)}`
                         : '—'
                 "
-                hint="after collapsing 375 m pixels to 1 km cells"
+                :hint="$t('after collapsing 375 m pixels to 1 km cells')"
                 accent="#f97316"
             />
             <KpiTile
-                label="Ratio transfer"
+                :label="$t('Ratio transfer')"
                 :value="ratio ? `×${formatNumber(ratio.value, 3)}` : '—'"
                 :hint="
                     ratio?.validation
-                        ? `holdout error −${formatPercent(ratio.validation.mae_improvement)} vs naive`
-                        : 'not calibrated'
+                        ? $t('holdout error −:percent vs naive', {
+                              percent: formatPercent(
+                                  ratio.validation.mae_improvement,
+                              ),
+                          })
+                        : $t('not calibrated')
                 "
                 accent="#3b82f6"
             />
             <KpiTile
-                label="FRP visibility threshold"
+                :label="$t('FRP visibility threshold')"
                 :value="
                     threshold ? `${formatNumber(threshold.value, 1)} MW` : '—'
                 "
                 :hint="
                     threshold?.validation
-                        ? `holdout error −${formatPercent(threshold.validation.mae_improvement)} vs naive`
-                        : 'not calibrated'
+                        ? $t('holdout error −:percent vs naive', {
+                              percent: formatPercent(
+                                  threshold.validation.mae_improvement,
+                              ),
+                          })
+                        : $t('not calibrated')
                 "
                 accent="#4ade80"
             />
@@ -135,8 +144,12 @@ const best = computed(() =>
 
         <div class="grid gap-4 xl:grid-cols-2">
             <SectionCard
-                title="Same day, two sensors"
-                description="Daily active cell-days. Points off the 1:1 line are the harmonization problem; the fitted line is the ratio transfer."
+                :title="$t('Same day, two sensors')"
+                :description="
+                    $t(
+                        'Daily active cell-days. Points off the 1:1 line are the harmonization problem; the fitted line is the ratio transfer.',
+                    )
+                "
             >
                 <OverlapScatterChart
                     :pairs="pairs"
@@ -144,25 +157,40 @@ const best = computed(() =>
                 />
             </SectionCard>
             <SectionCard
-                title="Choosing the FRP visibility threshold"
-                description="Count only VIIRS cell-days whose summed FRP reaches τ; the τ with the lowest daily error against MODIS wins."
+                :title="$t('Choosing the FRP visibility threshold')"
+                :description="
+                    $t(
+                        'Count only VIIRS cell-days whose summed FRP reaches τ; the τ with the lowest daily error against MODIS wins.',
+                    )
+                "
             >
                 <ThresholdCurveChart
                     :curve="thresholdCurve"
                     :chosen="threshold?.value ?? null"
                 />
                 <p v-if="best" class="mt-2 text-xs text-muted-foreground">
-                    Best τ on all overlap days: {{ best.tau }} MW (MAE
-                    {{ formatNumber(best.mae, 1) }} cell-days/day; Σ predicted
-                    {{ formatNumber(best.predicted) }} vs Σ MODIS
-                    {{ formatNumber(best.observed) }}).
+                    {{
+                        $t(
+                            'Best τ on all overlap days: :tau MW (MAE :mae cell-days/day; Σ predicted :predicted vs Σ MODIS :observed).',
+                            {
+                                tau: best.tau,
+                                mae: formatNumber(best.mae, 1),
+                                predicted: formatNumber(best.predicted),
+                                observed: formatNumber(best.observed),
+                            },
+                        )
+                    }}
                 </p>
             </SectionCard>
         </div>
 
         <SectionCard
-            title="Why a threshold is physical"
-            description="For every VIIRS cell-day, did MODIS detect the same 1 km cell the same day? Detection probability rises with fire radiative power."
+            :title="$t('Why a threshold is physical')"
+            :description="
+                $t(
+                    'For every VIIRS cell-day, did MODIS detect the same 1 km cell the same day? Detection probability rises with fire radiative power.',
+                )
+            "
         >
             <Deferred data="detectionCurve">
                 <template #fallback>
@@ -174,22 +202,33 @@ const best = computed(() =>
                         :chosen="threshold?.value ?? null"
                     />
                     <p class="mt-2 text-xs text-muted-foreground">
-                        Last {{ detectionCurve.days }} overlap day(s):
-                        {{ formatNumber(detectionCurve.both) }} cell-days seen
-                        by both,
-                        {{ formatNumber(detectionCurve.viirs_only) }} by VIIRS
-                        only (small or cool fires below MODIS sensitivity),
-                        {{ formatNumber(detectionCurve.modis_only) }} by MODIS
-                        only (different overpass times, clouds, Terra's morning
-                        orbit).
+                        {{
+                            $t(
+                                "Last :days overlap day(s): :both cell-days seen by both, :viirs by VIIRS only (small or cool fires below MODIS sensitivity), :modis by MODIS only (different overpass times, clouds, Terra's morning orbit).",
+                                {
+                                    days: detectionCurve.days,
+                                    both: formatNumber(detectionCurve.both),
+                                    viirs: formatNumber(
+                                        detectionCurve.viirs_only,
+                                    ),
+                                    modis: formatNumber(
+                                        detectionCurve.modis_only,
+                                    ),
+                                },
+                            )
+                        }}
                     </p>
                 </div>
             </Deferred>
         </SectionCard>
 
         <SectionCard
-            title="All fitted factors"
-            description="Per-month factors are used when a month has enough overlap days; otherwise the all-year factor applies."
+            :title="$t('All fitted factors')"
+            :description="
+                $t(
+                    'Per-month factors are used when a month has enough overlap days; otherwise the all-year factor applies.',
+                )
+            "
         >
             <FactorTable :factors="factors" />
         </SectionCard>

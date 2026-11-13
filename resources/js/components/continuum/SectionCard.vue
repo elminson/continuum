@@ -49,10 +49,10 @@ function save(): void {
                     class="inline-flex size-8 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                     :title="
                         failed
-                            ? 'This view cannot be saved as an image'
-                            : 'Download PNG'
+                            ? $t('This view cannot be saved as an image')
+                            : $t('Download PNG')
                     "
-                    :aria-label="`Download ${title} as PNG`"
+                    :aria-label="$t('Download :title as PNG', { title })"
                     @click="save"
                 >
                     <ImageDown class="size-4" />

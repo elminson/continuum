@@ -18,6 +18,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { basemapStyle, imageryTiles } from '@/lib/basemap';
 import type { Basemap } from '@/lib/basemap';
 import { INSTRUMENT_COLORS, formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import { hotspots } from '@/routes/api/v1';
 
 // MapLibre resolves its worker with a dynamic URL that bundlers cannot
@@ -181,9 +182,9 @@ function addLayers(): void {
                 .setHTML(
                     `<div>
                         <strong>${String(p.instrument).toUpperCase()}</strong> · ${p.satellite}<br>
-                        ${formatNumber(Number(p.detections))} pixel(s) in this 1 km cell<br>
-                        FRP Σ ${formatNumber(Number(p.frp_sum), 1)} MW · max ${formatNumber(Number(p.frp_max), 1)} MW<br>
-                        day/night ${p.day}/${p.night} · high conf ${p.high_confidence}
+                        ${t(':count pixel(s) in this 1 km cell', { count: formatNumber(Number(p.detections)) })}<br>
+                        ${t('FRP Σ :sum MW · max :max MW', { sum: formatNumber(Number(p.frp_sum), 1), max: formatNumber(Number(p.frp_max), 1) })}<br>
+                        ${t('day/night :day/:night · high conf :high', { day: p.day, night: p.night, high: p.high_confidence })}
                     </div>`,
                 )
                 .addTo(map);
@@ -247,7 +248,9 @@ async function load(): Promise<void> {
 
                 if (!response.ok) {
                     throw new Error(
-                        `Hotspot request failed (${response.status})`,
+                        t('Hotspot request failed (:status)', {
+                            status: response.status,
+                        }),
                     );
                 }
 
@@ -274,7 +277,7 @@ async function load(): Promise<void> {
         error.value =
             exception instanceof Error
                 ? exception.message
-                : 'Failed to load hotspots';
+                : t('Failed to load hotspots');
     } finally {
         if (id === requestId) {
             loading.value = false;
@@ -464,18 +467,19 @@ watch(
                     class="size-2.5 rounded-full"
                     :style="{ background: INSTRUMENT_COLORS.modis }"
                 />
-                MODIS 1 km cells · {{ formatNumber(counts.modis) }}
+                {{ $t('MODIS 1 km cells') }} · {{ formatNumber(counts.modis) }}
             </span>
             <span v-if="mode !== 'modis'" class="flex items-center gap-1.5">
                 <span
                     class="size-2.5 rounded-full"
                     :style="{ background: INSTRUMENT_COLORS.viirs }"
                 />
-                VIIRS 375 m → 1 km cells · {{ formatNumber(counts.viirs) }}
+                {{ $t('VIIRS 375 m → 1 km cells') }} ·
+                {{ formatNumber(counts.viirs) }}
             </span>
-            <span class="text-muted-foreground"
-                >circle size ∝ FRP · click a cell</span
-            >
+            <span class="text-muted-foreground">{{
+                $t('circle size ∝ FRP · click a cell')
+            }}</span>
         </div>
         <button
             v-if="draw"
@@ -488,14 +492,18 @@ watch(
             "
             @click="toggleDraw"
         >
-            {{ drawing ? 'Drag a rectangle… (click to cancel)' : 'Draw area' }}
+            {{
+                drawing
+                    ? $t('Drag a rectangle… (click to cancel)')
+                    : $t('Draw area')
+            }}
         </button>
         <div
             v-if="loading"
             class="absolute left-2 rounded-md bg-background/85 px-2 py-1 text-xs shadow backdrop-blur"
             :class="draw ? 'top-10' : 'top-2'"
         >
-            Loading {{ date }}…
+            {{ $t('Loading :date…', { date: date ?? '' }) }}
         </div>
         <div
             v-if="error"
@@ -508,7 +516,7 @@ watch(
             v-if="!date && !preview"
             class="absolute inset-0 flex items-center justify-center bg-background/60 text-sm text-muted-foreground"
         >
-            No detections ingested for this area yet.
+            {{ $t('No detections ingested for this area yet.') }}
         </div>
     </div>
 </template>

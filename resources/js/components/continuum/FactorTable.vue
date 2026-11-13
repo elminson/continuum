@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { formatNumber, formatPercent } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Factor } from '@/types/continuum';
 
 const props = defineProps<{ factors: Factor[] }>();
@@ -19,6 +20,10 @@ const MONTHS = [
     'Nov',
     'Dec',
 ];
+
+function monthLabel(month: number | null): string {
+    return t(MONTHS[(month ?? 1) - 1]);
+}
 
 const groups = computed(() => {
     const map = new Map<
@@ -79,13 +84,17 @@ function describe(factor: Factor): string {
                 <div>
                     <p class="text-sm font-medium">
                         {{ group.label }} →
-                        {{ group.reference.toUpperCase() }}-equivalent
+                        {{
+                            $t(':reference-equivalent', {
+                                reference: group.reference.toUpperCase(),
+                            })
+                        }}
                     </p>
                     <p
                         v-if="group.allYear"
                         class="text-xs text-muted-foreground"
                     >
-                        All-year {{ describe(group.allYear) }}
+                        {{ $t('All-year') }} {{ describe(group.allYear) }}
                         <span
                             v-if="
                                 group.unit !== 'MW' &&
@@ -93,22 +102,26 @@ function describe(factor: Factor): string {
                             "
                         >
                             [{{ formatNumber(group.allYear.ci95[0], 3) }},
-                            {{ formatNumber(group.allYear.ci95[1], 3) }}] 95%
-                            bootstrap
+                            {{ formatNumber(group.allYear.ci95[1], 3) }}]
+                            {{ $t('95% bootstrap') }}
                         </span>
-                        · {{ group.allYear.sample_days }} overlap days ({{
-                            group.allYear.overlap[0]
+                        ·
+                        {{
+                            $t(':count overlap days (:from → :to)', {
+                                count: group.allYear.sample_days,
+                                from: group.allYear.overlap[0],
+                                to: group.allYear.overlap[1],
+                            })
                         }}
-                        → {{ group.allYear.overlap[1] }})
                     </p>
                 </div>
                 <p v-if="group.allYear?.validation" class="text-xs">
-                    <span class="font-medium">Holdout:</span>
+                    <span class="font-medium">{{ $t('Holdout:') }}</span>
                     MAE
                     {{
                         formatNumber(group.allYear.validation.harmonized.mae, 1)
                     }}
-                    vs naive
+                    {{ $t('vs naive') }}
                     {{ formatNumber(group.allYear.validation.naive.mae, 1) }}
                     <span
                         :class="
@@ -128,11 +141,16 @@ function describe(factor: Factor): string {
                                 ),
                             )
                         }}
-                        error)
+                        {{ $t('error') }})
                     </span>
                     · r =
                     {{ formatNumber(group.allYear.validation.correlation, 2) }}
-                    · {{ group.allYear.validation.test_days }} test days
+                    ·
+                    {{
+                        $t(':count test days', {
+                            count: group.allYear.validation.test_days,
+                        })
+                    }}
                 </p>
             </div>
             <div
@@ -143,10 +161,10 @@ function describe(factor: Factor): string {
                     v-for="factor in group.months"
                     :key="factor.month ?? 0"
                     class="rounded bg-muted/50 px-1 py-1 text-center"
-                    :title="`${factor.sample_days} days`"
+                    :title="$t(':count days', { count: factor.sample_days })"
                 >
                     <div class="text-muted-foreground">
-                        {{ MONTHS[(factor.month ?? 1) - 1] }}
+                        {{ monthLabel(factor.month) }}
                     </div>
                     <div class="font-medium tabular-nums">
                         {{
@@ -160,7 +178,10 @@ function describe(factor: Factor): string {
         </div>
     </div>
     <p v-else class="text-sm text-muted-foreground">
-        Not calibrated yet: this area needs days observed by both MODIS and
-        VIIRS.
+        {{
+            $t(
+                'Not calibrated yet: this area needs days observed by both MODIS and VIIRS.',
+            )
+        }}
     </p>
 </template>

@@ -15,6 +15,7 @@ import { computed } from 'vue';
 import CountUp from '@/components/engineering/CountUp.vue';
 import { vReveal } from '@/composables/useReveal';
 import { formatDate, formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import { index as alertsIndex } from '@/routes/alerts';
 
 type Reading = {
@@ -101,38 +102,50 @@ const json = computed(() =>
     example.value ? JSON.stringify(example.value.reading, null, 2) : '',
 );
 
-const guardrails = [
+const guardrails = computed(() => [
     {
         icon: Scale,
-        title: 'Statistics decide, AI reads',
-        body: 'A period is flagged by the robust z-score first. The reading never changes an alert, a calendar or a calibration factor.',
+        title: t('Statistics decide, AI reads'),
+        body: t(
+            'A period is flagged by the robust z-score first. The reading never changes an alert, a calendar or a calibration factor.',
+        ),
     },
     {
         icon: Braces,
-        title: 'Answers fit a schema',
-        body: 'Output is constrained to a JSON schema: fixed choices for cause and attention, a bounded risk, one sentence. No free-form claims.',
+        title: t('Answers fit a schema'),
+        body: t(
+            'Output is constrained to a JSON schema: fixed choices for cause and attention, a bounded risk, one sentence. No free-form claims.',
+        ),
     },
     {
         icon: ClipboardCheck,
-        title: 'Graded before it is trusted',
-        body: 'Every model or prompt change runs the labelled benchmark through the same code. The score, misses included, is published here.',
+        title: t('Graded before it is trusted'),
+        body: t(
+            'Every model or prompt change runs the labelled benchmark through the same code. The score, misses included, is published here.',
+        ),
     },
     {
         icon: Tag,
-        title: 'Labelled as advice',
-        body: 'Every reading names its model and is marked as an AI reading on the alert and in the public API.',
+        title: t('Labelled as advice'),
+        body: t(
+            'Every reading names its model and is marked as an AI reading on the alert and in the public API.',
+        ),
     },
     {
         icon: HardDrive,
-        title: 'Open weights, our hardware',
-        body: 'An open-weights model on our own machine, reached through a token-gated Cloudflare Tunnel. No alert goes to a paid AI vendor.',
+        title: t('Open weights, our hardware'),
+        body: t(
+            'An open-weights model on our own machine, reached through a token-gated Cloudflare Tunnel. No alert goes to a paid AI vendor.',
+        ),
     },
     {
         icon: RefreshCcw,
-        title: 'Deterministic and fail-safe',
-        body: 'Temperature 0, so the same numbers give the same reading. If the model is offline, alerts still publish without one.',
+        title: t('Deterministic and fail-safe'),
+        body: t(
+            'Temperature 0, so the same numbers give the same reading. If the model is offline, alerts still publish without one.',
+        ),
     },
-];
+]);
 </script>
 
 <template>
@@ -146,7 +159,9 @@ const guardrails = [
                 <div
                     class="flex items-center justify-between gap-3 border-b border-border px-5 py-3 text-xs"
                 >
-                    <span class="font-medium">What the analyst receives</span>
+                    <span class="font-medium">{{
+                        $t('What the analyst receives')
+                    }}</span>
                     <span class="font-mono text-muted-foreground">{{
                         ai.model
                     }}</span>
@@ -154,7 +169,7 @@ const guardrails = [
                 <div class="space-y-4 p-5 text-[13px] leading-relaxed">
                     <div>
                         <p class="mb-2 font-mono text-xs text-muted-foreground">
-                            rubric (system instructions)
+                            {{ $t('rubric (system instructions)') }}
                         </p>
                         <ul class="space-y-1.5">
                             <li
@@ -171,14 +186,17 @@ const guardrails = [
                     </div>
                     <div class="border-t border-border pt-4">
                         <p class="mb-2 font-mono text-xs text-muted-foreground">
-                            state, built from the alert's numbers
+                            {{ $t("state, built from the alert's numbers") }}
                         </p>
                         <p v-if="example" class="font-mono">
                             {{ example.state }}
                         </p>
                         <p v-else class="text-muted-foreground">
-                            The first reading appears here once the analyst has
-                            read a flagged period.
+                            {{
+                                $t(
+                                    'The first reading appears here once the analyst has read a flagged period.',
+                                )
+                            }}
                         </p>
                     </div>
                 </div>
@@ -191,17 +209,19 @@ const guardrails = [
                     <div
                         class="flex items-center justify-between gap-3 border-b border-border px-5 py-3 text-xs"
                     >
-                        <span class="font-medium">What it returns</span>
-                        <span class="font-mono text-muted-foreground"
-                            >schema-checked JSON</span
-                        >
+                        <span class="font-medium">{{
+                            $t('What it returns')
+                        }}</span>
+                        <span class="font-mono text-muted-foreground">{{
+                            $t('schema-checked JSON')
+                        }}</span>
                     </div>
                     <pre
                         v-if="example"
                         class="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed whitespace-pre-wrap"
                     ><code>{{ json }}</code></pre>
                     <p v-else class="p-5 text-sm text-muted-foreground">
-                        No reading yet.
+                        {{ $t('No reading yet.') }}
                     </p>
                 </figure>
 
@@ -210,14 +230,15 @@ const guardrails = [
                     class="rounded-2xl border border-border bg-card p-5"
                 >
                     <p class="text-sm text-muted-foreground">
-                        Shown on the alert as
+                        {{ $t('Shown on the alert as') }}
                     </p>
                     <p class="mt-2 flex flex-wrap gap-2 text-sm">
                         <span
                             class="rounded-md bg-lime-500/15 px-2 py-0.5 font-medium text-lime-800 dark:text-lime-300"
                             >{{
-                                CAUSE_SHORT[example.reading.cause] ??
-                                example.reading.cause
+                                CAUSE_SHORT[example.reading.cause]
+                                    ? $t(CAUSE_SHORT[example.reading.cause])
+                                    : example.reading.cause
                             }}</span
                         >
                         <span
@@ -229,18 +250,21 @@ const guardrails = [
                             "
                             >{{ ai.attention[example.reading.attention] }}</span
                         >
-                        <span class="rounded-md bg-muted px-2 py-0.5"
-                            >Baseline
-                            {{
-                                example.reading.baseline_reliable
-                                    ? 'reliable'
-                                    : 'too thin'
-                            }}</span
-                        >
+                        <span class="rounded-md bg-muted px-2 py-0.5">{{
+                            example.reading.baseline_reliable
+                                ? $t('Baseline reliable')
+                                : $t('Baseline too thin')
+                        }}</span>
                     </p>
                     <p class="mt-3 text-sm text-muted-foreground">
-                        {{ example.region.split(' (')[0] }}, read
-                        {{ formatDate(example.triaged_at.slice(0, 10)) }}.
+                        {{
+                            $t(':area, read :date.', {
+                                area: example.region.split(' (')[0],
+                                date: formatDate(
+                                    example.triaged_at.slice(0, 10),
+                                ),
+                            })
+                        }}
                         {{ example.message }}
                     </p>
                 </div>
@@ -255,11 +279,15 @@ const guardrails = [
         >
             <div>
                 <h3 class="text-xl font-semibold tracking-tight">
-                    Graded before it is trusted
+                    {{ $t('Graded before it is trusted') }}
                 </h3>
                 <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {{ evaluation.cases }} labelled cases, run through the same
-                    code as the live readings.
+                    {{
+                        $t(
+                            ':count labelled cases, run through the same code as the live readings.',
+                            { count: evaluation.cases },
+                        )
+                    }}
                 </p>
                 <p
                     class="mt-6 font-mono text-6xl font-semibold tracking-tighter"
@@ -268,22 +296,28 @@ const guardrails = [
                         evaluation.cases
                     }}
                 </p>
-                <p class="text-sm text-muted-foreground">cases fully right</p>
+                <p class="text-sm text-muted-foreground">
+                    {{ $t('cases fully right') }}
+                </p>
                 <dl class="mt-6 space-y-2 text-sm">
                     <div class="flex justify-between gap-4">
-                        <dt class="text-muted-foreground">Baseline check</dt>
+                        <dt class="text-muted-foreground">
+                            {{ $t('Baseline check') }}
+                        </dt>
                         <dd class="font-mono font-semibold">
                             {{ pct(evaluation.scores.baseline_reliable) }}
                         </dd>
                     </div>
                     <div class="flex justify-between gap-4">
-                        <dt class="text-muted-foreground">Cause</dt>
+                        <dt class="text-muted-foreground">{{ $t('Cause') }}</dt>
                         <dd class="font-mono font-semibold">
                             {{ pct(evaluation.scores.cause) }}
                         </dd>
                     </div>
                     <div class="flex justify-between gap-4">
-                        <dt class="text-muted-foreground">Attention</dt>
+                        <dt class="text-muted-foreground">
+                            {{ $t('Attention') }}
+                        </dt>
                         <dd class="font-mono font-semibold">
                             {{ pct(evaluation.scores.attention) }}
                         </dd>
@@ -292,7 +326,9 @@ const guardrails = [
                         v-if="evaluation.scores.median_seconds"
                         class="flex justify-between gap-4"
                     >
-                        <dt class="text-muted-foreground">Median time</dt>
+                        <dt class="text-muted-foreground">
+                            {{ $t('Median time') }}
+                        </dt>
                         <dd class="font-mono font-semibold">
                             {{
                                 formatNumber(
@@ -305,10 +341,17 @@ const guardrails = [
                     </div>
                 </dl>
                 <p class="mt-4 text-xs text-muted-foreground">
-                    {{ evaluation.model }}, run
-                    {{ formatDate(evaluation.ran_at.slice(0, 10)) }}. Two local
-                    models were compared on this suite; the better one reads the
-                    live alerts.
+                    {{
+                        $t(
+                            ':model, run :date. Two local models were compared on this suite; the better one reads the live alerts.',
+                            {
+                                model: evaluation.model,
+                                date: formatDate(
+                                    evaluation.ran_at.slice(0, 10),
+                                ),
+                            },
+                        )
+                    }}
                 </p>
             </div>
 
@@ -318,11 +361,17 @@ const guardrails = [
                         <tr
                             class="border-b border-border text-left text-xs text-muted-foreground"
                         >
-                            <th class="px-4 py-3 font-medium">Case</th>
-                            <th class="px-4 py-3 font-medium">Expected</th>
-                            <th class="px-4 py-3 font-medium">Model said</th>
+                            <th class="px-4 py-3 font-medium">
+                                {{ $t('Case') }}
+                            </th>
+                            <th class="px-4 py-3 font-medium">
+                                {{ $t('Expected') }}
+                            </th>
+                            <th class="px-4 py-3 font-medium">
+                                {{ $t('Model said') }}
+                            </th>
                             <th class="px-4 py-3 text-right font-medium">
-                                Result
+                                {{ $t('Result') }}
                             </th>
                         </tr>
                     </thead>
@@ -361,23 +410,23 @@ const guardrails = [
                                     <span
                                         v-if="!result.checks.baseline_reliable"
                                         class="text-amber-600 dark:text-amber-400"
-                                        >, baseline</span
+                                        >, {{ $t('baseline') }}</span
                                     >
                                 </template>
-                                <span v-else class="text-destructive"
-                                    >no answer</span
-                                >
+                                <span v-else class="text-destructive">{{
+                                    $t('no answer')
+                                }}</span>
                             </td>
                             <td class="px-4 py-2.5 text-right">
                                 <Check
                                     v-if="result.passed"
                                     class="ml-auto size-4 text-lime-600 dark:text-lime-400"
-                                    aria-label="passed"
+                                    :aria-label="$t('passed')"
                                 />
                                 <X
                                     v-else
                                     class="ml-auto size-4 text-amber-600 dark:text-amber-400"
-                                    aria-label="missed"
+                                    :aria-label="$t('missed')"
                                 />
                             </td>
                         </tr>
@@ -396,7 +445,11 @@ const guardrails = [
                     <CountUp :value="ai.read" />
                 </p>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    of {{ formatNumber(ai.alerts) }} unusual periods read
+                    {{
+                        $t('of :count unusual periods read', {
+                            count: formatNumber(ai.alerts),
+                        })
+                    }}
                 </p>
             </div>
             <div class="px-2 md:border-r md:border-border md:px-6">
@@ -404,7 +457,7 @@ const guardrails = [
                     <CountUp :value="ai.act_now" />
                 </p>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    marked "act now" for a person to review
+                    {{ $t('marked "act now" for a person to review') }}
                 </p>
             </div>
             <div class="px-2 md:border-r md:border-border md:px-6">
@@ -412,7 +465,7 @@ const guardrails = [
                     <CountUp :value="ai.thin_baseline" />
                 </p>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    with a baseline judged too thin to trust
+                    {{ $t('with a baseline judged too thin to trust') }}
                 </p>
             </div>
             <div class="px-2 md:px-6">
@@ -420,7 +473,7 @@ const guardrails = [
                     $0
                 </p>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    per reading, on our own hardware
+                    {{ $t('per reading, on our own hardware') }}
                 </p>
             </div>
         </div>
@@ -457,15 +510,15 @@ const guardrails = [
         >
             <Lock class="mt-0.5 size-4 shrink-0" />
             <span>
-                Built on the Laravel AI SDK: an agent with structured output at
-                temperature 0, served by Ollama on our own machine. We tested a
-                pointer-style decision model first; it could not tell a thin
-                baseline from a real event, so it does not read alerts. See
-                every reading on
+                {{
+                    $t(
+                        'Built on the Laravel AI SDK: an agent with structured output at temperature 0, served by Ollama on our own machine. We tested a pointer-style decision model first; it could not tell a thin baseline from a real event, so it does not read alerts. See every reading on',
+                    )
+                }}
                 <Link
                     :href="alertsIndex()"
                     class="font-medium text-foreground underline underline-offset-4"
-                    >Unusual periods</Link
+                    >{{ $t('Unusual periods') }}</Link
                 >.
             </span>
         </p>

@@ -22,6 +22,7 @@ import SectionCard from '@/components/continuum/SectionCard.vue';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCompact, formatDate, formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import { home, method as methodPage } from '@/routes';
 import {
     exportMethod as exportCalendar,
@@ -143,14 +144,14 @@ const presets = computed(() => {
     }
 
     return [
-        { label: '30 days', from: shift(last, -29), to: last },
-        { label: '12 months', from: shift(last, -364), to: last },
+        { label: t('30 days'), from: shift(last, -29), to: last },
+        { label: t('12 months'), from: shift(last, -364), to: last },
         {
             label: `${last.slice(0, 4)}`,
             from: `${last.slice(0, 4)}-01-01`,
             to: last,
         },
-        { label: 'All years', from: '', to: '' },
+        { label: t('All years'), from: '', to: '' },
     ];
 });
 
@@ -163,6 +164,15 @@ const rangeLabel = computed(() =>
     props.comparison
         ? `${formatDate(props.comparison.from)} – ${formatDate(props.comparison.to)}`
         : '',
+);
+
+const cellDescription = computed(
+    () =>
+        ({
+            day: t('Each cell is one day'),
+            week: t('Each cell is one week'),
+            month: t('Each cell is one month'),
+        })[props.series.period] ?? `Each cell is one ${props.series.period}`,
 );
 
 const fileStem = computed(
@@ -219,15 +229,20 @@ const change = computed(() => {
                 <p class="text-sm text-muted-foreground">
                     {{ region.description }}
                     <span class="whitespace-nowrap"
-                        >· {{ formatNumber(region.area_km2) }} km² · box
-                        {{ region.bbox.join(', ') }}</span
+                        >· {{ formatNumber(region.area_km2) }} km² ·
+                        {{ $t('box') }} {{ region.bbox.join(', ') }}</span
                     >
                     <span
                         v-if="region.summary?.first_date"
                         class="whitespace-nowrap"
                     >
-                        · data {{ formatDate(region.summary.first_date) }} →
-                        {{ formatDate(region.summary.last_date) }}</span
+                        ·
+                        {{
+                            $t('data :from → :to', {
+                                from: formatDate(region.summary.first_date),
+                                to: formatDate(region.summary.last_date),
+                            })
+                        }}</span
                     >
                 </p>
             </div>
@@ -235,15 +250,28 @@ const change = computed(() => {
                 <span
                     v-if="props.backfill"
                     class="inline-flex items-center gap-2 rounded-md border border-orange-500/40 bg-orange-500/10 px-2.5 py-1 text-xs text-orange-600 dark:text-orange-400"
-                    :title="`Started ${props.backfill.started_at}`"
+                    :title="
+                        $t('Started :time', {
+                            time: props.backfill.started_at,
+                        })
+                    "
                 >
                     <span
                         class="size-2 animate-pulse rounded-full bg-orange-500"
                     />
-                    Fetching FIRMS history · {{ props.backfill.done }} /
-                    {{ props.backfill.total }} windows
+                    {{
+                        $t('Fetching FIRMS history · :done / :total windows', {
+                            done: props.backfill.done,
+                            total: props.backfill.total,
+                        })
+                    }}
                     <span v-if="props.backfill.failed > 0"
-                        >· {{ props.backfill.failed }} failed</span
+                        >·
+                        {{
+                            $t(':count failed', {
+                                count: props.backfill.failed,
+                            })
+                        }}</span
                     >
                 </span>
                 <Button
@@ -256,28 +284,31 @@ const change = computed(() => {
                         :href="backfill(region.slug)"
                         method="post"
                         as="button"
-                        ><History class="size-4" /> Fetch full history</Link
+                        ><History class="size-4" />
+                        {{ $t('Fetch full history') }}</Link
                     >
                 </Button>
                 <Button variant="outline" size="sm" as-child>
                     <Link :href="lab(region.slug)"
-                        ><FlaskConical class="size-4" /> Harmonization lab</Link
+                        ><FlaskConical class="size-4" />
+                        {{ $t('Harmonization lab') }}</Link
                     >
                 </Button>
                 <Button variant="outline" size="sm" as-child>
                     <a :href="hotspotsUrl"
-                        ><FileSpreadsheet class="size-4" /> Hotspots CSV</a
+                        ><FileSpreadsheet class="size-4" />
+                        {{ $t('Hotspots CSV') }}</a
                     >
                 </Button>
                 <Button variant="outline" size="sm" as-child>
                     <a :href="exportUrl"
-                        ><Download class="size-4" /> Calendar CSV</a
+                        ><Download class="size-4" /> {{ $t('Calendar CSV') }}</a
                     >
                 </Button>
                 <template v-if="region.is_owner">
                     <Button variant="outline" size="sm" as-child>
                         <Link :href="edit(region.slug)"
-                            ><Pencil class="size-4" /> Edit</Link
+                            ><Pencil class="size-4" /> {{ $t('Edit') }}</Link
                         >
                     </Button>
                     <Button variant="outline" size="sm" as-child>
@@ -285,7 +316,8 @@ const change = computed(() => {
                             :href="harmonize(region.slug)"
                             method="post"
                             as="button"
-                            ><RefreshCw class="size-4" /> Re-run</Link
+                            ><RefreshCw class="size-4" />
+                            {{ $t('Re-run') }}</Link
                         >
                     </Button>
                 </template>
@@ -296,7 +328,7 @@ const change = computed(() => {
             class="flex flex-wrap items-end gap-3 rounded-xl border border-sidebar-border/70 bg-card p-3 dark:border-sidebar-border"
         >
             <label class="grid gap-1 text-xs">
-                <span class="text-muted-foreground">From</span>
+                <span class="text-muted-foreground">{{ $t('From') }}</span>
                 <input
                     v-model="from"
                     type="date"
@@ -306,7 +338,7 @@ const change = computed(() => {
                 />
             </label>
             <label class="grid gap-1 text-xs">
-                <span class="text-muted-foreground">To</span>
+                <span class="text-muted-foreground">{{ $t('To') }}</span>
                 <input
                     v-model="to"
                     type="date"
@@ -334,7 +366,7 @@ const change = computed(() => {
                 </button>
             </div>
             <label class="grid gap-1 text-xs">
-                <span class="text-muted-foreground">Group by</span>
+                <span class="text-muted-foreground">{{ $t('Group by') }}</span>
                 <select
                     v-model="period"
                     class="h-8 rounded-md border border-input bg-background px-2 text-sm"
@@ -352,13 +384,13 @@ const change = computed(() => {
                 <summary
                     class="cursor-pointer text-muted-foreground select-none hover:text-foreground"
                 >
-                    Harmonization options
+                    {{ $t('Harmonization options') }}
                 </summary>
                 <div class="mt-2 flex flex-wrap items-end gap-3">
                     <label class="grid gap-1">
-                        <span class="text-muted-foreground"
-                            >Transfer method</span
-                        >
+                        <span class="text-muted-foreground">{{
+                            $t('Transfer method')
+                        }}</span>
                         <select
                             v-model="method"
                             class="h-8 rounded-md border border-input bg-background px-2 text-sm"
@@ -373,7 +405,9 @@ const change = computed(() => {
                         </select>
                     </label>
                     <label class="grid gap-1">
-                        <span class="text-muted-foreground">Scale</span>
+                        <span class="text-muted-foreground">{{
+                            $t('Scale')
+                        }}</span>
                         <select
                             v-model="reference"
                             class="h-8 rounded-md border border-input bg-background px-2 text-sm"
@@ -393,7 +427,7 @@ const change = computed(() => {
                             type="checkbox"
                             class="size-3.5"
                         />
-                        Native MODIS / VIIRS</label
+                        {{ $t('Native MODIS / VIIRS') }}</label
                     >
                     <label class="flex items-center gap-2"
                         ><input
@@ -401,7 +435,7 @@ const change = computed(() => {
                             type="checkbox"
                             class="size-3.5"
                         />
-                        Naive merge</label
+                        {{ $t('Naive merge') }}</label
                     >
                     <p
                         v-if="methodOption?.description"
@@ -415,35 +449,39 @@ const change = computed(() => {
 
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <KpiTile
-                label="Hotspots"
+                :label="$t('Hotspots')"
                 :value="formatCompact(comparison?.hotspots ?? null)"
                 :hint="rangeLabel"
             />
             <KpiTile
-                label="Fire activity"
+                :label="$t('Fire activity')"
                 :value="formatCompact(comparison?.current ?? null)"
-                hint="harmonized cell-days, any sensor"
+                :hint="$t('harmonized cell-days, any sensor')"
                 accent="#4ade80"
             />
             <KpiTile
-                label="Historical median"
+                :label="$t('Historical median')"
                 :value="formatCompact(comparison?.median ?? null)"
                 :hint="
                     comparison?.reason === 'range_too_long'
-                        ? 'pick a range of up to one year'
+                        ? $t('pick a range of up to one year')
                         : comparison?.years
-                          ? `same dates, ${comparison.years} earlier years`
-                          : 'no earlier years yet'
+                          ? $t('same dates, :count earlier years', {
+                                count: comparison.years,
+                            })
+                          : $t('no earlier years yet')
                 "
             />
             <KpiTile
-                label="Versus median"
+                :label="$t('Versus median')"
                 :value="change?.text ?? '—'"
                 :accent="change?.color"
                 :hint="
                     comparison?.percentile !== null &&
                     comparison?.percentile !== undefined
-                        ? `higher than ${Math.round(comparison.percentile)}% of earlier years`
+                        ? $t('higher than :percent% of earlier years', {
+                              percent: Math.round(comparison.percentile),
+                          })
                         : ''
                 "
             />
@@ -451,17 +489,26 @@ const change = computed(() => {
 
         <SectionCard
             v-if="comparison && comparison.history.length > 0"
-            title="Same dates in earlier years"
-            :description="`${rangeLabel} against every earlier year of the record`"
+            :title="$t('Same dates in earlier years')"
+            :description="
+                $t(':range against every earlier year of the record', {
+                    range: rangeLabel,
+                })
+            "
             :download="`${fileStem}_vs_median`"
         >
             <ComparisonChart :comparison="comparison" />
         </SectionCard>
 
         <SectionCard
-            title="Harmonized burning activity"
+            :title="$t('Harmonized burning activity')"
             :download="`${fileStem}_series`"
-            :description="`Active 1 km cell-days per ${series.period}; shaded band is the 95% transfer interval on estimated periods.`"
+            :description="
+                $t(
+                    'Active 1 km cell-days per :period; shaded band is the 95% transfer interval on estimated periods.',
+                    { period: $t(series.period) },
+                )
+            "
         >
             <HarmonizedSeriesChart
                 :points="series.points"
@@ -474,21 +521,23 @@ const change = computed(() => {
                 v-if="showNaive"
                 class="mt-2 rounded-md bg-muted p-2 text-xs text-muted-foreground"
             >
-                The naive merge concatenates whichever sensor is newest. Where
-                VIIRS starts (2012) it jumps by the sensitivity gap, not because
-                burning changed.
+                {{
+                    $t(
+                        'The naive merge concatenates whichever sensor is newest. Where VIIRS starts (2012) it jumps by the sensitivity gap, not because burning changed.',
+                    )
+                }}
             </p>
         </SectionCard>
 
         <div class="grid gap-4 xl:grid-cols-2">
             <SectionCard
-                title="Fire activity calendar"
-                :description="`Each cell is one ${series.period}`"
+                :title="$t('Fire activity calendar')"
+                :description="cellDescription"
                 :download="`${fileStem}_calendar_${calendarMetric}`"
                 :download-note="
                     calendarMetric === 'hotspots'
-                        ? 'raw hotspots'
-                        : 'harmonized cell-days'
+                        ? $t('raw hotspots')
+                        : $t('harmonized cell-days')
                 "
             >
                 <template #actions>
@@ -502,7 +551,7 @@ const change = computed(() => {
                             ] as const"
                             :key="metric"
                             type="button"
-                            class="px-2.5 py-1 capitalize"
+                            class="px-2.5 py-1"
                             :class="
                                 calendarMetric === metric
                                     ? 'bg-foreground text-background'
@@ -510,7 +559,11 @@ const change = computed(() => {
                             "
                             @click="calendarMetric = metric"
                         >
-                            {{ metric }}
+                            {{
+                                metric === 'harmonized'
+                                    ? $t('Harmonized')
+                                    : $t('Hotspots')
+                            }}
                         </button>
                     </div>
                 </template>
@@ -521,8 +574,12 @@ const change = computed(() => {
                 />
             </SectionCard>
             <SectionCard
-                title="Critical periods"
-                description="Climatological fire season from the harmonized monthly record"
+                :title="$t('Critical periods')"
+                :description="
+                    $t(
+                        'Climatological fire season from the harmonized monthly record',
+                    )
+                "
             >
                 <SeasonBar :critical="critical" />
             </SectionCard>
@@ -531,8 +588,10 @@ const change = computed(() => {
         <div class="grid gap-4 xl:grid-cols-3">
             <SectionCard
                 class="xl:col-span-2"
-                title="Where it burned"
-                description="Both sensors on the same 1 km grid for one day"
+                :title="$t('Where it burned')"
+                :description="
+                    $t('Both sensors on the same 1 km grid for one day')
+                "
                 :download="`${fileStem}_map_${mapDate}`"
                 :download-note="mapDate ? formatDate(mapDate) : ''"
             >
@@ -558,7 +617,7 @@ const change = computed(() => {
                             "
                             @click="mapMode = mode"
                         >
-                            {{ mode }}
+                            {{ mode === 'both' ? $t('Both') : mode }}
                         </button>
                     </div>
                 </template>
@@ -570,8 +629,10 @@ const change = computed(() => {
                 />
             </SectionCard>
             <SectionCard
-                title="Unusual periods"
-                description="Robust anomaly screening on the harmonized series"
+                :title="$t('Unusual periods')"
+                :description="
+                    $t('Robust anomaly screening on the harmonized series')
+                "
             >
                 <AlertList :alerts="alerts" />
             </SectionCard>
@@ -579,14 +640,20 @@ const change = computed(() => {
 
         <div class="grid gap-4 xl:grid-cols-2">
             <SectionCard
-                title="Transfer functions"
-                description="Fitted on the days both instruments observed this area; validated on held-out days"
+                :title="$t('Transfer functions')"
+                :description="
+                    $t(
+                        'Fitted on the days both instruments observed this area; validated on held-out days',
+                    )
+                "
             >
                 <FactorTable :factors="factors" />
             </SectionCard>
             <SectionCard
-                title="Method receipt"
-                description="Provenance shipped with every export and API response"
+                :title="$t('Method receipt')"
+                :description="
+                    $t('Provenance shipped with every export and API response')
+                "
             >
                 <Deferred data="receipt">
                     <template #fallback>
@@ -602,9 +669,11 @@ const change = computed(() => {
         </div>
 
         <p class="text-xs text-muted-foreground">
-            Data: NASA FIRMS · MODIS Collection 6.1 (Terra, Aqua) · VIIRS 375 m
-            (S-NPP, NOAA-20, NOAA-21) ·
-            <Link :href="methodPage()" class="underline">How it works</Link>
+            {{ $t('Data') }}: NASA FIRMS · MODIS Collection 6.1 (Terra, Aqua) ·
+            VIIRS 375 m (S-NPP, NOAA-20, NOAA-21) ·
+            <Link :href="methodPage()" class="underline">{{
+                $t('How it works')
+            }}</Link>
         </p>
     </div>
 </template>

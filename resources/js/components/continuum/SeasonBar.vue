@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { CriticalPeriods } from '@/types/continuum';
 
 const props = defineProps<{ critical: CriticalPeriods }>();
@@ -15,6 +16,13 @@ function inSeason(index: number): boolean {
     return season.start <= season.end
         ? index >= season.start && index <= season.end
         : index >= season.start || index <= season.end;
+}
+
+function periodUnits(period: string): string {
+    return (
+        { day: t('days'), week: t('weeks'), month: t('months') }[period] ??
+        `${period}s`
+    );
 }
 
 const max = computed(() =>
@@ -34,7 +42,13 @@ const max = computed(() =>
                 v-for="c in critical.climatology"
                 :key="c.index"
                 class="flex flex-col items-center gap-1"
-                :title="`${c.label}: typical ${formatNumber(c.typical)} cell-days (${c.years} yr)`"
+                :title="
+                    $t(':label: typical :value cell-days (:years yr)', {
+                        label: c.label,
+                        value: formatNumber(c.typical),
+                        years: c.years,
+                    })
+                "
             >
                 <div
                     class="flex h-16 w-full items-end rounded-sm"
@@ -72,35 +86,43 @@ const max = computed(() =>
         </div>
         <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
             <span v-if="critical.season">
-                <span class="font-medium">Fire season:</span>
+                <span class="font-medium">{{ $t('Fire season:') }}</span>
                 {{ critical.season.start_label }} –
-                {{ critical.season.end_label }} ({{ critical.season.length }}
-                {{ critical.period }}s ≥ 50% of peak)
+                {{ critical.season.end_label }}
+                {{
+                    $t('(:count :units ≥ 50% of peak)', {
+                        count: critical.season.length,
+                        units: periodUnits(critical.period),
+                    })
+                }}
             </span>
             <span v-if="critical.season?.onset_label">
-                <span class="font-medium">Onset:</span>
+                <span class="font-medium">{{ $t('Onset:') }}</span>
                 {{ critical.season.onset_label }}
             </span>
             <span v-if="critical.peak">
-                <span class="font-medium">Peak:</span>
-                {{ critical.peak.label }} ({{
-                    formatNumber(critical.peak.typical)
+                <span class="font-medium">{{ $t('Peak:') }}</span>
+                {{ critical.peak.label }}
+                {{
+                    $t('(:value typical cell-days)', {
+                        value: formatNumber(critical.peak.typical),
+                    })
                 }}
-                typical cell-days)
             </span>
             <span v-if="critical.latest">
-                <span class="font-medium">Latest:</span>
+                <span class="font-medium">{{ $t('Latest:') }}</span>
                 {{ critical.latest.period_start }} ·
                 {{
                     critical.latest.in_season
-                        ? 'inside the critical period'
-                        : 'outside the critical period'
+                        ? $t('inside the critical period')
+                        : $t('outside the critical period')
                 }}
             </span>
-            <span class="text-muted-foreground"
-                >Climatology from {{ critical.years }} year(s) of harmonized
-                data.</span
-            >
+            <span class="text-muted-foreground">{{
+                $t('Climatology from :count year(s) of harmonized data.', {
+                    count: critical.years,
+                })
+            }}</span>
         </div>
     </div>
 </template>

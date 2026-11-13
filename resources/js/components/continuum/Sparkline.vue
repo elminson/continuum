@@ -62,7 +62,7 @@ const path = computed(() => {
             :y="height / 2 + 4"
             class="fill-muted-foreground text-[10px]"
         >
-            no recent data
+            {{ $t('no recent data') }}
         </text>
     </svg>
 </template>

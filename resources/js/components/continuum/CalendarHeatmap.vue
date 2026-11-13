@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import VChart from 'vue-echarts';
 import { useChartTheme } from '@/lib/charts';
 import { formatNumber, formatPeriod } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { SeriesPoint } from '@/types/continuum';
 
 const props = withDefaults(
@@ -80,11 +81,10 @@ const layout = computed(() => {
     let columns: string[] = [];
 
     if (props.period === 'month') {
-        columns = MONTHS;
+        columns = MONTHS.map((month) => t(month));
     } else if (props.period === 'week') {
-        columns = Array.from(
-            { length: 52 },
-            (_, i) => `W${String(i + 1).padStart(2, '0')}`,
+        columns = Array.from({ length: 52 }, (_, i) =>
+            t('W:week', { week: String(i + 1).padStart(2, '0') }),
         );
     } else {
         columns = Array.from({ length: 31 }, (_, i) => String(i + 1));
@@ -139,9 +139,15 @@ const option = computed(() => {
             formatter: (params: { dataIndex: number }) => {
                 const point = props.points[params.dataIndex];
 
-                const hotspots = `MODIS ${formatNumber(point.modis?.detections)} · VIIRS ${formatNumber(point.viirs?.detections)} hotspots`;
+                const hotspots = t('MODIS :modis · VIIRS :viirs hotspots', {
+                    modis: formatNumber(point.modis?.detections),
+                    viirs: formatNumber(point.viirs?.detections),
+                });
+                const estimated = point.estimated
+                    ? ` <em>${t('(estimated from :source)', { source: point.source?.toUpperCase() ?? '' })}</em>`
+                    : '';
 
-                return `<strong>${formatPeriod(point.period_start, props.period)}</strong><br>${formatNumber(point.harmonized)} harmonized fire cell-days${point.estimated ? ' <em>(estimated from ' + point.source?.toUpperCase() + ')</em>' : ''}<br>${hotspots}`;
+                return `<strong>${formatPeriod(point.period_start, props.period)}</strong><br>${t(':value harmonized fire cell-days', { value: formatNumber(point.harmonized) })}${estimated}<br>${hotspots}`;
             },
         },
         grid: { left: 64, right: 16, top: 10, bottom: 84 },
@@ -201,14 +207,19 @@ const height = computed(
             :style="{ height }"
         />
         <p class="mt-1 text-[11px] text-muted-foreground">
-            Rows are {{ period === 'day' ? 'months' : 'years' }}.
-            <template v-if="metric === 'harmonized'"
-                >Dashed cells are estimated from the other sensor.</template
-            >
-            <template v-else
-                >Raw MODIS + VIIRS pixels: VIIRS reports several per MODIS
-                pixel, so counts jump in 2012.</template
-            >
+            {{
+                period === 'day'
+                    ? $t('Rows are months.')
+                    : $t('Rows are years.')
+            }}
+            <template v-if="metric === 'harmonized'">{{
+                $t('Dashed cells are estimated from the other sensor.')
+            }}</template>
+            <template v-else>{{
+                $t(
+                    'Raw MODIS + VIIRS pixels: VIIRS reports several per MODIS pixel, so counts jump in 2012.',
+                )
+            }}</template>
         </p>
     </div>
 </template>

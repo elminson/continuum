@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleAppearance::class,
+            SetLocale::class,
             HandleInertiaRequests::class,
             // Preload only the first chunks: the full list overflowed the proxy header buffer (502).
             AddLinkHeadersForPreloadedAssets::using(12),
@@ -44,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
             EncryptCookies::class,
             StartSession::class,
         ]);
+        $middleware->api(append: [SetLocale::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -77,17 +77,26 @@ const hotspotExample = `${props.baseUrl}/hotspots?bbox=${props.exampleBbox}&date
     <div class="mx-auto flex max-w-4xl flex-col gap-4 p-4">
         <header>
             <h1 class="text-2xl font-semibold tracking-tight">
-                Public JSON API
+                {{ $t('Public JSON API') }}
             </h1>
             <p class="mt-1 text-sm text-muted-foreground">
-                Read-only, no key required, 120 requests per minute per client.
-                Base URL <code class="rounded bg-muted px-1">{{ baseUrl }}</code
-                >. Every response that carries harmonized numbers also carries
-                the method receipt.
+                {{
+                    $t(
+                        'Read-only, no key required, 120 requests per minute per client.',
+                    )
+                }}
+                {{ $t('Base URL') }}
+                <code class="rounded bg-muted px-1">{{ baseUrl }}</code
+                >.
+                {{
+                    $t(
+                        'Every response that carries harmonized numbers also carries the method receipt.',
+                    )
+                }}
             </p>
         </header>
 
-        <SectionCard title="Endpoints">
+        <SectionCard :title="$t('Endpoints')">
             <table class="w-full text-sm">
                 <tbody>
                     <tr
@@ -105,14 +114,14 @@ const hotspotExample = `${props.baseUrl}/hotspots?bbox=${props.exampleBbox}&date
                             {{ endpoint.path }}
                         </td>
                         <td class="py-2 text-muted-foreground">
-                            {{ endpoint.description }}
+                            {{ $t(endpoint.description) }}
                         </td>
                     </tr>
                 </tbody>
             </table>
         </SectionCard>
 
-        <SectionCard title="Examples">
+        <SectionCard :title="$t('Examples')">
             <pre
                 class="overflow-x-auto rounded-md bg-muted p-3 text-xs"
             ><code>curl "{{ example }}"
@@ -121,7 +130,7 @@ curl "{{ hotspotExample }}"
 
 curl -o calendar.csv "{{ baseUrl }}/regions/{{ exampleSlug }}/export?period=week&method=ratio&reference=viirs"</code></pre>
             <p class="mt-2 text-xs text-muted-foreground">
-                Calendar points look like
+                {{ $t('Calendar points look like') }}
                 <code class="rounded bg-muted px-1"
                     >{ period_start, modis: {cell_days, detections, frp_sum,
                     coverage_days…}, viirs: {…}, harmonized, low, high,
@@ -130,7 +139,7 @@ curl -o calendar.csv "{{ baseUrl }}/regions/{{ exampleSlug }}/export?period=week
             </p>
         </SectionCard>
 
-        <SectionCard title="Run your own copy">
+        <SectionCard :title="$t('Run your own copy')">
             <pre
                 class="overflow-x-auto rounded-md bg-muted p-3 text-xs"
             ><code>composer run setup            # install, .env, key, migrate, npm build

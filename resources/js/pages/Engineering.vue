@@ -35,6 +35,7 @@ import type { PipelineStage } from '@/components/engineering/PipelineTimeline.vu
 import { Button } from '@/components/ui/button';
 import { vReveal } from '@/composables/useReveal';
 import { formatCompact, formatDate, formatNumber } from '@/lib/format';
+import { t as trans } from '@/lib/i18n';
 import { apiDocs, engineering, home, method } from '@/routes';
 import { lab, show } from '@/routes/regions';
 import type { OverlapPair, ThresholdPoint } from '@/types/continuum';
@@ -158,204 +159,261 @@ const whole = (value: number) => formatNumber(Math.round(value));
 const stages = computed<PipelineStage[]>(() => [
     {
         icon: CloudDownload,
-        title: 'Fetch',
-        body: `The FIRMS Area API is walked in ${props.config.window_days}-day windows per sensor, newest first, inside a transaction budget that pauses the queue instead of failing it. Boxes are padded so neighbouring areas reuse each download.`,
+        title: trans('Fetch'),
+        body: trans(
+            'The FIRMS Area API is walked in :days-day windows per sensor, newest first, inside a transaction budget that pauses the queue instead of failing it. Boxes are padded so neighbouring areas reuse each download.',
+            { days: props.config.window_days },
+        ),
         code: 'BackfillPlanner · AreaApiClient',
         metric: formatNumber(t.value.area_windows),
-        metricLabel: 'FIRMS windows fetched',
+        metricLabel: trans('FIRMS windows fetched'),
     },
     {
         icon: Fingerprint,
-        title: 'Parse and deduplicate',
-        body: 'Every CSV row is normalised across MODIS C6.1 and VIIRS C2 schemas and fingerprinted. Re-downloads, overlapping boxes and near-real-time rows later replaced by the science archive never count twice.',
+        title: trans('Parse and deduplicate'),
+        body: trans(
+            'Every CSV row is normalised across MODIS C6.1 and VIIRS C2 schemas and fingerprinted. Re-downloads, overlapping boxes and near-real-time rows later replaced by the science archive never count twice.',
+        ),
         code: 'CsvParser · IngestDetections',
         metric: compact(t.value.rows_read),
-        metricLabel: 'rows read from NASA',
+        metricLabel: trans('rows read from NASA'),
     },
     {
         icon: Grid3x3,
-        title: 'Snap to one grid',
-        body: `A 1 km pixel and a 375 m pixel are not the same event. Both sensors land on one ${props.config.grid_km} km equal-area grid, and the unit of record becomes the active cell-day, with each instrument's satellites merged.`,
+        title: trans('Snap to one grid'),
+        body: trans(
+            "A 1 km pixel and a 375 m pixel are not the same event. Both sensors land on one :km km equal-area grid, and the unit of record becomes the active cell-day, with each instrument's satellites merged.",
+            { km: props.config.grid_km },
+        ),
         code: 'Support\\Geo\\Grid · AggregateCellDays',
         metric: compact(t.value.cell_days),
-        metricLabel: 'cell-days on the grid',
+        metricLabel: trans('cell-days on the grid'),
     },
     {
         icon: Sigma,
-        title: 'Calibrate on the overlap',
-        body: `Where both instruments flew, two transfer functions are fitted: a monthly ratio with a ${props.config.bootstrap_samples}-sample paired bootstrap interval, and an FRP visibility threshold chosen from the data.`,
+        title: trans('Calibrate on the overlap'),
+        body: trans(
+            'Where both instruments flew, two transfer functions are fitted: a monthly ratio with a :samples-sample paired bootstrap interval, and an FRP visibility threshold chosen from the data.',
+            { samples: props.config.bootstrap_samples },
+        ),
         code: 'CalibrateRegion',
         metric: formatNumber(t.value.calibration_factors),
-        metricLabel: 'fitted factors',
+        metricLabel: trans('fitted factors'),
     },
     {
         icon: ShieldCheck,
-        title: 'Validate before publishing',
-        body: `Every ${Math.round(1 / props.config.holdout_fraction)}th overlap day is held out. Factors are fitted without it and scored against it, beside the naive merge, so the improvement is measured, not asserted.`,
+        title: trans('Validate before publishing'),
+        body: trans(
+            'Every :nth overlap day is held out. Factors are fitted without it and scored against it, beside the naive merge, so the improvement is measured, not asserted.',
+            { n: Math.round(1 / props.config.holdout_fraction) },
+        ),
         code: 'Statistics::errors · interleaved holdout',
         metric:
             improvement.value === null
-                ? 'n/a'
+                ? trans('n/a')
                 : `${formatNumber(improvement.value, 0)}%`,
-        metricLabel: 'less error than a naive merge',
+        metricLabel: trans('less error than a naive merge'),
     },
     {
         icon: CalendarRange,
-        title: 'Calendar and anomalies',
-        body: `Harmonized counts roll up into day, week and month calendars. Each period is compared with the same period in other years using median and MAD, and flagged from z ≥ ${props.config.thresholds.watch}.`,
+        title: trans('Calendar and anomalies'),
+        body: trans(
+            'Harmonized counts roll up into day, week and month calendars. Each period is compared with the same period in other years using median and MAD, and flagged from z ≥ :watch.',
+            { watch: props.config.thresholds.watch },
+        ),
         code: 'HarmonizeRegion · CriticalPeriods',
         metric: compact(t.value.calendar_entries),
-        metricLabel: 'calendar entries',
+        metricLabel: trans('calendar entries'),
     },
     {
         icon: Sparkles,
-        title: 'Read with AI, as advice',
-        body: `A self-hosted open-weights model reads each flagged period against a written rubric: whether the baseline can be trusted, the likely cause, and whether a person should act. Its answers are schema-checked and benchmarked, and it never changes a number.`,
+        title: trans('Read with AI, as advice'),
+        body: trans(
+            'A self-hosted open-weights model reads each flagged period against a written rubric: whether the baseline can be trusted, the likely cause, and whether a person should act. Its answers are schema-checked and benchmarked, and it never changes a number.',
+        ),
         code: 'AlertAnalyst · Laravel AI SDK',
         metric: formatNumber(props.ai.read),
-        metricLabel: 'periods read by the analyst',
+        metricLabel: trans('periods read by the analyst'),
     },
     {
         icon: Code2,
-        title: 'Serve with a receipt',
-        body: 'The same numbers power this site and a public JSON API. Every export carries a method receipt: sensors, versions, factors, uncertainty and the holdout score behind them.',
+        title: trans('Serve with a receipt'),
+        body: trans(
+            'The same numbers power this site and a public JSON API. Every export carries a method receipt: sensors, versions, factors, uncertainty and the holdout score behind them.',
+        ),
         code: 'Api\\V1 · MethodReceipt',
         metric: formatNumber(t.value.alerts),
-        metricLabel: 'unusual periods flagged',
+        metricLabel: trans('unusual periods flagged'),
     },
 ]);
 
-const layers: ArchitectureLayer[] = [
+const layers = computed<ArchitectureLayer[]>(() => [
     {
-        name: 'NASA sources',
+        name: trans('NASA sources'),
         nodes: [
             {
                 icon: Satellite,
                 title: 'FIRMS Area API',
-                detail: 'MODIS and VIIRS archive plus near-real-time, per box and day range.',
+                detail: trans(
+                    'MODIS and VIIRS archive plus near-real-time, per box and day range.',
+                ),
             },
             {
                 icon: Radar,
-                title: 'FIRMS global feeds',
-                detail: 'Key-free CSVs, the last 24 h pulled every hour.',
+                title: trans('FIRMS global feeds'),
+                detail: trans(
+                    'Key-free CSVs, the last 24 h pulled every hour.',
+                ),
             },
             {
                 icon: Globe2,
                 title: 'NASA GIBS',
-                detail: 'VIIRS true-colour imagery for the selected day on every map.',
+                detail: trans(
+                    'VIIRS true-colour imagery for the selected day on every map.',
+                ),
             },
         ],
     },
     {
-        name: 'Ingest',
+        name: trans('Ingest'),
         nodes: [
             {
                 icon: Workflow,
-                title: 'Queue worker',
-                detail: 'Batched windows on a priority lane, budget-aware, resumable.',
+                title: trans('Queue worker'),
+                detail: trans(
+                    'Batched windows on a priority lane, budget-aware, resumable.',
+                ),
             },
             {
                 icon: Timer,
-                title: 'Scheduler',
-                detail: 'Hourly ingest and harmonization, cache warming every 5 min.',
+                title: trans('Scheduler'),
+                detail: trans(
+                    'Hourly ingest and harmonization, cache warming every 5 min.',
+                ),
             },
         ],
     },
     {
-        name: 'Store',
+        name: trans('Store'),
         nodes: [
             {
                 icon: Database,
                 title: 'PostgreSQL 16',
-                detail: 'Detections, cell-days, calendars and factors. Composite indexes per query shape.',
+                detail: trans(
+                    'Detections, cell-days, calendars and factors. Composite indexes per query shape.',
+                ),
             },
         ],
     },
     {
-        name: 'Harmonize',
+        name: trans('Harmonize'),
         nodes: [
             {
                 icon: FlaskConical,
-                title: 'Calibration engine',
-                detail: 'Ratio and FRP threshold transfers, bootstrap intervals, holdout scoring.',
+                title: trans('Calibration engine'),
+                detail: trans(
+                    'Ratio and FRP threshold transfers, bootstrap intervals, holdout scoring.',
+                ),
             },
             {
                 icon: Sparkles,
-                title: 'Alert analyst',
-                detail: 'Open-weights model via Ollama on our own machine, through Cloudflare Tunnel. Advice only.',
+                title: trans('Alert analyst'),
+                detail: trans(
+                    'Open-weights model via Ollama on our own machine, through Cloudflare Tunnel. Advice only.',
+                ),
             },
             {
                 icon: BadgeCheck,
-                title: 'Anomaly screen',
-                detail: 'Robust z-scores against climatology by week and month.',
+                title: trans('Anomaly screen'),
+                detail: trans(
+                    'Robust z-scores against climatology by week and month.',
+                ),
             },
         ],
     },
     {
-        name: 'Serve',
+        name: trans('Serve'),
         nodes: [
             {
                 icon: ServerCog,
                 title: 'Laravel 13 + Inertia',
-                detail: 'Vue 3 pages, MapLibre maps, ECharts, stale-while-revalidate caches.',
+                detail: trans(
+                    'Vue 3 pages, MapLibre maps, ECharts, stale-while-revalidate caches.',
+                ),
             },
             {
                 icon: Cloud,
-                title: 'Public API',
-                detail: 'Regions, calendars, calibration, alerts, hotspots and CSV exports.',
+                title: trans('Public API'),
+                detail: trans(
+                    'Regions, calendars, calibration, alerts, hotspots and CSV exports.',
+                ),
             },
         ],
     },
-];
+]);
 
-const decisions: {
-    icon: typeof Gauge;
-    title: string;
-    body: string;
-    before: string | null;
-    after: string;
-    label: string;
-}[] = [
+const decisions = computed<
+    {
+        icon: typeof Gauge;
+        title: string;
+        body: string;
+        before: string | null;
+        after: string;
+        label: string;
+    }[]
+>(() => [
     {
         icon: Gauge,
-        title: 'Heavy aggregates never block a visitor',
-        body: 'Global totals scan millions of cell-days. They are rewritten as hash aggregates, served stale-while-revalidate and warmed on a schedule.',
+        title: trans('Heavy aggregates never block a visitor'),
+        body: trans(
+            'Global totals scan millions of cell-days. They are rewritten as hash aggregates, served stale-while-revalidate and warmed on a schedule.',
+        ),
         before: '12.8 s',
         after: '0.7 s',
-        label: 'home page on the production server',
+        label: trans('home page on the production server'),
     },
     {
         icon: Layers,
-        title: 'Indexes shaped like the questions',
-        body: 'The hotspot map asks for one day, one sensor and a box. A composite index with the coordinates lets Postgres reject cells without reading them.',
+        title: trans('Indexes shaped like the questions'),
+        body: trans(
+            'The hotspot map asks for one day, one sensor and a box. A composite index with the coordinates lets Postgres reject cells without reading them.',
+        ),
         before: '34k',
         after: '2k',
-        label: 'rows read per map request',
+        label: trans('rows read per map request'),
     },
     {
         icon: Boxes,
-        title: 'Progress counted, not simulated',
-        body: 'The data intake panel counts window keys against real coverage instead of instantiating thousands of queued jobs on every poll.',
+        title: trans('Progress counted, not simulated'),
+        body: trans(
+            'The data intake panel counts window keys against real coverage instead of instantiating thousands of queued jobs on every poll.',
+        ),
         before: '8.3 s',
         after: '62 ms',
-        label: 'per 20-second dashboard poll',
+        label: trans('per 20-second dashboard poll'),
     },
     {
         icon: ShieldCheck,
-        title: 'Guard rails over good intentions',
-        body: 'A second backfill for the same area is refused, builds never delete live assets, and every change passes the test suite and static analysis first.',
+        title: trans('Guard rails over good intentions'),
+        body: trans(
+            'A second backfill for the same area is refused, builds never delete live assets, and every change passes the test suite and static analysis first.',
+        ),
         before: null,
-        after: '250+ tests',
-        label: 'plus PHPStan level 7 on every change',
+        after: trans('250+ tests'),
+        label: trans('plus PHPStan level 7 on every change'),
     },
-];
+]);
 </script>
 
 <template>
-    <Head title="How it works">
+    <Head :title="$t('How it works')">
         <meta
             name="description"
-            content="How Continuum turns MODIS and VIIRS fire detections into one validated record: pipeline, calibration evidence and architecture, with live numbers."
+            :content="
+                $t(
+                    'How Continuum turns MODIS and VIIRS fire detections into one validated record: pipeline, calibration evidence and architecture, with live numbers.',
+                )
+            "
         />
     </Head>
 
@@ -368,23 +426,27 @@ const decisions: {
         >
             <div v-reveal class="max-w-xl">
                 <p class="text-sm font-medium text-lime-600 dark:text-lime-400">
-                    How it works
+                    {{ $t('How it works') }}
                 </p>
                 <h1
                     class="mt-3 text-4xl leading-[1.05] font-semibold tracking-tighter text-balance md:text-5xl lg:text-6xl"
                 >
-                    Two satellites. One record you can check.
+                    {{ $t('Two satellites. One record you can check.') }}
                 </h1>
                 <p
                     class="mt-5 max-w-[46ch] text-base leading-relaxed text-muted-foreground md:text-lg"
                 >
-                    The pipeline, the evidence and the machine behind Continuum,
-                    with every number read live from the system.
+                    {{
+                        $t(
+                            'The pipeline, the evidence and the machine behind Continuum, with every number read live from the system.',
+                        )
+                    }}
                 </p>
                 <div class="mt-8 flex flex-wrap gap-3">
                     <Button as-child size="lg" class="active:scale-[0.98]">
                         <a href="#pipeline"
-                            >See the pipeline <ArrowRight class="size-4"
+                            >{{ $t('See the pipeline') }}
+                            <ArrowRight class="size-4"
                         /></a>
                     </Button>
                     <Button
@@ -393,7 +455,9 @@ const decisions: {
                         variant="outline"
                         class="active:scale-[0.98]"
                     >
-                        <Link :href="method()">Read the method</Link>
+                        <Link :href="method()">{{
+                            $t('Read the method')
+                        }}</Link>
                     </Button>
                 </div>
             </div>
@@ -409,15 +473,19 @@ const decisions: {
                     />
                 </div>
                 <figcaption class="mt-3 text-sm text-muted-foreground">
-                    {{ shortName }} on {{ formatDate(f.map_date) }}: MODIS and
-                    VIIRS cells, live from our API over NASA GIBS imagery.
+                    {{
+                        $t(
+                            ':area on :date: MODIS and VIIRS cells, live from our API over NASA GIBS imagery.',
+                            { area: shortName, date: formatDate(f.map_date) },
+                        )
+                    }}
                 </figcaption>
             </figure>
         </section>
 
         <!-- The scale, in four numbers. -->
         <section
-            aria-label="What the system has processed"
+            :aria-label="$t('What the system has processed')"
             class="grid grid-cols-2 gap-y-10 border-y border-border py-10 lg:grid-cols-4"
         >
             <div v-reveal class="px-2 lg:border-r lg:border-border lg:px-6">
@@ -427,7 +495,7 @@ const decisions: {
                     <CountUp :value="t.detections" :format="compact" />
                 </p>
                 <p class="mt-2 text-sm text-muted-foreground">
-                    fire detections ingested
+                    {{ $t('fire detections ingested') }}
                 </p>
             </div>
             <div
@@ -438,11 +506,17 @@ const decisions: {
                     class="font-mono text-4xl font-semibold tracking-tight md:text-5xl"
                 >
                     <CountUp :value="years ?? 0" :format="whole" />
-                    <span class="text-2xl text-muted-foreground"> yrs</span>
+                    <span class="text-2xl text-muted-foreground">
+                        {{ $t('yrs') }}</span
+                    >
                 </p>
                 <p class="mt-2 text-sm text-muted-foreground">
-                    {{ formatDate(t.first_date) }} to
-                    {{ formatDate(t.last_date) }}
+                    {{
+                        $t(':from to :to', {
+                            from: formatDate(t.first_date),
+                            to: formatDate(t.last_date),
+                        })
+                    }}
                 </p>
             </div>
             <div
@@ -455,7 +529,7 @@ const decisions: {
                     <CountUp :value="t.satellites" :format="whole" />
                 </p>
                 <p class="mt-2 text-sm text-muted-foreground">
-                    satellites, two instruments
+                    {{ $t('satellites, two instruments') }}
                 </p>
             </div>
             <div v-reveal="240" class="px-2 lg:px-6">
@@ -468,7 +542,7 @@ const decisions: {
                     />
                 </p>
                 <p class="mt-2 text-sm text-muted-foreground">
-                    VIIRS pixels per MODIS pixel, before harmonizing
+                    {{ $t('VIIRS pixels per MODIS pixel, before harmonizing') }}
                 </p>
             </div>
         </section>
@@ -477,11 +551,14 @@ const decisions: {
         <section id="pipeline" class="scroll-mt-20">
             <div v-reveal class="mb-12 max-w-2xl">
                 <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
-                    From a CSV row to a calendar you can trust
+                    {{ $t('From a CSV row to a calendar you can trust') }}
                 </h2>
                 <p class="mt-4 text-base leading-relaxed text-muted-foreground">
-                    Seven stages, each one a class you can read in the
-                    repository, each one reporting what it has done so far.
+                    {{
+                        $t(
+                            'Seven stages, each one a class you can read in the repository, each one reporting what it has done so far.',
+                        )
+                    }}
                 </p>
             </div>
             <PipelineTimeline :stages="stages" />
@@ -491,11 +568,15 @@ const decisions: {
         <section v-if="f">
             <div v-reveal class="mb-10 max-w-2xl">
                 <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
-                    The evidence, not the claim
+                    {{ $t('The evidence, not the claim') }}
                 </h2>
                 <p class="mt-4 text-base leading-relaxed text-muted-foreground">
-                    {{ shortName }} has the longest calibrated overlap of the
-                    public areas. This is what its transfer functions rest on.
+                    {{
+                        $t(
+                            ':area has the longest calibrated overlap of the public areas. This is what its transfer functions rest on.',
+                            { area: shortName },
+                        )
+                    }}
                 </p>
             </div>
 
@@ -504,12 +585,21 @@ const decisions: {
                     v-reveal
                     class="rounded-2xl border border-border bg-card p-5 lg:col-span-4 lg:row-span-2"
                 >
-                    <h3 class="font-semibold">Same day, both sensors</h3>
+                    <h3 class="font-semibold">
+                        {{ $t('Same day, both sensors') }}
+                    </h3>
                     <p class="mt-1 text-sm text-muted-foreground">
-                        {{ formatNumber(f.pairs.length) }} overlap days. The
-                        fitted ratio is {{ formatNumber(f.ratio.value, 3) }},
-                        95% interval {{ formatNumber(f.ratio.ci95[0], 3) }} to
-                        {{ formatNumber(f.ratio.ci95[1], 3) }}.
+                        {{
+                            $t(
+                                ':days overlap days. The fitted ratio is :ratio, 95% interval :low to :high.',
+                                {
+                                    days: formatNumber(f.pairs.length),
+                                    ratio: formatNumber(f.ratio.value, 3),
+                                    low: formatNumber(f.ratio.ci95[0], 3),
+                                    high: formatNumber(f.ratio.ci95[1], 3),
+                                },
+                            )
+                        }}
                     </p>
                     <div class="mt-4 h-[360px] lg:h-[460px]">
                         <OverlapScatterChart
@@ -526,7 +616,7 @@ const decisions: {
                     <p
                         class="text-sm font-medium text-lime-700 dark:text-lime-400"
                     >
-                        On held-out days
+                        {{ $t('On held-out days') }}
                     </p>
                     <p
                         class="mt-3 font-mono text-6xl font-semibold tracking-tighter"
@@ -534,13 +624,16 @@ const decisions: {
                         <template v-if="improvement !== null">
                             <CountUp :value="improvement" :format="whole" />%
                         </template>
-                        <template v-else>n/a</template>
+                        <template v-else>{{ $t('n/a') }}</template>
                     </p>
                     <p
                         class="mt-2 text-sm leading-relaxed text-muted-foreground"
                     >
-                        less absolute error than merging the two records
-                        naively.
+                        {{
+                            $t(
+                                'less absolute error than merging the two records naively.',
+                            )
+                        }}
                     </p>
                     <dl
                         v-if="ratioValidation"
@@ -548,12 +641,12 @@ const decisions: {
                     >
                         <div>
                             <dt class="text-muted-foreground">
-                                Mean abs. error
+                                {{ $t('Mean abs. error') }}
                             </dt>
                             <dd class="font-mono font-semibold">
                                 {{ formatNumber(ratioValidation.mae, 1) }}
                                 <span class="font-normal text-muted-foreground"
-                                    >vs
+                                    >{{ $t('vs') }}
                                     {{
                                         formatNumber(
                                             ratioValidation.naive_mae,
@@ -568,7 +661,7 @@ const decisions: {
                             <dd class="font-mono font-semibold">
                                 {{ formatNumber(ratioValidation.r2, 2) }}
                                 <span class="font-normal text-muted-foreground"
-                                    >vs
+                                    >{{ $t('vs') }}
                                     {{
                                         formatNumber(
                                             ratioValidation.naive_r2,
@@ -579,17 +672,31 @@ const decisions: {
                             </dd>
                         </div>
                         <div>
-                            <dt class="text-muted-foreground">Fitted on</dt>
+                            <dt class="text-muted-foreground">
+                                {{ $t('Fitted on') }}
+                            </dt>
                             <dd class="font-mono font-semibold">
-                                {{ formatNumber(ratioValidation.train_days) }}
-                                days
+                                {{
+                                    $t(':count days', {
+                                        count: formatNumber(
+                                            ratioValidation.train_days,
+                                        ),
+                                    })
+                                }}
                             </dd>
                         </div>
                         <div>
-                            <dt class="text-muted-foreground">Scored on</dt>
+                            <dt class="text-muted-foreground">
+                                {{ $t('Scored on') }}
+                            </dt>
                             <dd class="font-mono font-semibold">
-                                {{ formatNumber(ratioValidation.test_days) }}
-                                days
+                                {{
+                                    $t(':count days', {
+                                        count: formatNumber(
+                                            ratioValidation.test_days,
+                                        ),
+                                    })
+                                }}
                             </dd>
                         </div>
                     </dl>
@@ -599,13 +706,15 @@ const decisions: {
                     v-reveal="180"
                     class="rounded-2xl border border-border bg-card p-5 lg:col-span-2"
                 >
-                    <h3 class="font-semibold">Choosing the FRP threshold</h3>
+                    <h3 class="font-semibold">
+                        {{ $t('Choosing the FRP threshold') }}
+                    </h3>
                     <p class="mt-1 text-sm text-muted-foreground">
-                        Error of every candidate. The minimum is
+                        {{ $t('Error of every candidate. The minimum is') }}
                         <span class="font-mono text-foreground">{{
                             f.threshold
                                 ? formatNumber(f.threshold.value, 0) + ' MW'
-                                : 'n/a'
+                                : $t('n/a')
                         }}</span
                         >.
                     </p>
@@ -619,17 +728,17 @@ const decisions: {
             </div>
 
             <p v-reveal class="mt-4 text-sm text-muted-foreground">
-                Explore every factor, month by month, in the
+                {{ $t('Explore every factor, month by month, in the') }}
                 <Link
                     :href="lab(f.slug)"
                     class="font-medium text-foreground underline underline-offset-4"
-                    >calibration lab</Link
+                    >{{ $t('calibration lab') }}</Link
                 >
-                or open the
+                {{ $t('or open the') }}
                 <Link
                     :href="show(f.slug)"
                     class="font-medium text-foreground underline underline-offset-4"
-                    >{{ shortName }} calendar</Link
+                    >{{ $t(':area calendar', { area: shortName }) }}</Link
                 >.
             </p>
         </section>
@@ -638,19 +747,19 @@ const decisions: {
         <section id="ai" class="scroll-mt-20">
             <div v-reveal class="mb-10 max-w-2xl">
                 <p class="text-sm font-medium text-lime-600 dark:text-lime-400">
-                    Responsible AI
+                    {{ $t('Responsible AI') }}
                 </p>
                 <h2
                     class="mt-2 text-3xl font-semibold tracking-tight md:text-4xl"
                 >
-                    AI that follows a rubric, and gets graded
+                    {{ $t('AI that follows a rubric, and gets graded') }}
                 </h2>
                 <p class="mt-4 text-base leading-relaxed text-muted-foreground">
-                    Once the statistics flag a period, an open-weights model we
-                    host reads it like an analyst would: is the baseline
-                    trustworthy, what probably caused it, and does it need a
-                    person now. It answers in a fixed schema and is graded on a
-                    labelled benchmark.
+                    {{
+                        $t(
+                            'Once the statistics flag a period, an open-weights model we host reads it like an analyst would: is the baseline trustworthy, what probably caused it, and does it need a person now. It answers in a fixed schema and is graded on a labelled benchmark.',
+                        )
+                    }}
                 </p>
             </div>
             <AiReader :ai="ai" />
@@ -662,11 +771,14 @@ const decisions: {
         >
             <div v-reveal class="mb-10 max-w-2xl">
                 <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
-                    One service, end to end
+                    {{ $t('One service, end to end') }}
                 </h2>
                 <p class="mt-4 text-base leading-relaxed text-muted-foreground">
-                    Open NASA data in, a validated record out. Everything runs
-                    on a single small server behind Cloudflare.
+                    {{
+                        $t(
+                            'Open NASA data in, a validated record out. Everything runs on a single small server behind Cloudflare.',
+                        )
+                    }}
                 </p>
             </div>
             <ArchitectureFlow :layers="layers" />
@@ -676,11 +788,14 @@ const decisions: {
         <section>
             <div v-reveal class="mb-10 max-w-2xl">
                 <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
-                    Built to keep running
+                    {{ $t('Built to keep running') }}
                 </h2>
                 <p class="mt-4 text-base leading-relaxed text-muted-foreground">
-                    Measured on the production server while a 26-year backfill
-                    was streaming in.
+                    {{
+                        $t(
+                            'Measured on the production server while a 26-year backfill was streaming in.',
+                        )
+                    }}
                 </p>
             </div>
             <div class="grid gap-x-10 gap-y-12 md:grid-cols-2">
@@ -733,18 +848,21 @@ const decisions: {
         >
             <div>
                 <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
-                    Every number here is an API call away.
+                    {{ $t('Every number here is an API call away.') }}
                 </h2>
                 <p class="mt-3 max-w-[55ch] text-muted-foreground">
-                    Calendars, calibration factors, alerts and hotspots for
-                    {{ t.public_areas }} public areas, open and documented, each
-                    with its method receipt.
+                    {{
+                        $t(
+                            'Calendars, calibration factors, alerts and hotspots for :count public areas, open and documented, each with its method receipt.',
+                            { count: t.public_areas },
+                        )
+                    }}
                 </p>
             </div>
             <div class="flex flex-wrap gap-3">
                 <Button as-child size="lg" class="active:scale-[0.98]">
                     <Link :href="apiDocs()"
-                        >Explore the API <ArrowRight class="size-4"
+                        >{{ $t('Explore the API') }} <ArrowRight class="size-4"
                     /></Link>
                 </Button>
             </div>

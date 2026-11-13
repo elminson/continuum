@@ -20,22 +20,29 @@ defineOptions({
 </script>
 
 <template>
-    <Head title="Areas of interest" />
+    <Head :title="$t('Areas of interest')" />
 
     <div class="flex flex-col gap-4 p-4">
         <header class="flex flex-wrap items-center justify-between gap-2">
             <div>
-                <h1 class="text-xl font-semibold">Areas of interest</h1>
+                <h1 class="text-xl font-semibold">
+                    {{ $t('Areas of interest') }}
+                </h1>
                 <p class="text-sm text-muted-foreground">
-                    Each area gets its own calendar, calibration and anomaly
-                    screening.
+                    {{
+                        $t(
+                            'Each area gets its own calendar, calibration and anomaly screening.',
+                        )
+                    }}
                 </p>
             </div>
             <Button v-if="canCreate" as-child>
-                <Link :href="create()"><Plus class="size-4" /> New area</Link>
+                <Link :href="create()"
+                    ><Plus class="size-4" /> {{ $t('New area') }}</Link
+                >
             </Button>
             <p v-else class="text-xs text-muted-foreground">
-                Sign in to draw your own area of interest.
+                {{ $t('Sign in to draw your own area of interest.') }}
             </p>
         </header>
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

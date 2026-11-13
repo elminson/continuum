@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import VChart from 'vue-echarts';
 import { useChartTheme } from '@/lib/charts';
 import { INSTRUMENT_COLORS, formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { ThresholdPoint } from '@/types/continuum';
 
 const props = defineProps<{ curve: ThresholdPoint[]; chosen: number | null }>();
@@ -20,27 +21,27 @@ const option = computed(() => ({
         formatter: (params: { dataIndex: number }[]) => {
             const point = props.curve[params[0].dataIndex];
 
-            return `<strong>τ ≥ ${point.tau} MW</strong><br>MAE ${formatNumber(point.mae, 1)} · bias ${formatNumber(point.bias, 1)}<br>Σ predicted ${formatNumber(point.predicted)} vs Σ MODIS ${formatNumber(point.observed)}`;
+            return `<strong>τ ≥ ${point.tau} MW</strong><br>${t('MAE :mae · bias :bias', { mae: formatNumber(point.mae, 1), bias: formatNumber(point.bias, 1) })}<br>${t('Σ predicted :predicted vs Σ MODIS :observed', { predicted: formatNumber(point.predicted), observed: formatNumber(point.observed) })}`;
         },
     },
     xAxis: {
         type: 'category',
         data: props.curve.map((p) => p.tau),
-        name: 'FRP visibility threshold τ (MW, cell-day ΣFRP)',
+        name: t('FRP visibility threshold τ (MW, cell-day ΣFRP)'),
         nameLocation: 'middle',
         nameGap: 28,
         axisLabel: { color: theme.muted.value },
     },
     yAxis: {
         type: 'value',
-        name: 'daily error (cell-days)',
+        name: t('daily error (cell-days)'),
         nameTextStyle: { color: theme.muted.value, align: 'left' },
         axisLabel: { color: theme.muted.value },
         splitLine: { lineStyle: { color: theme.grid.value } },
     },
     series: [
         {
-            name: 'MAE vs MODIS',
+            name: t('MAE vs MODIS'),
             type: 'line',
             data: props.curve.map((p) => p.mae),
             color: INSTRUMENT_COLORS.harmonized,
@@ -59,7 +60,9 @@ const option = computed(() => ({
                               {
                                   xAxis: String(props.chosen),
                                   label: {
-                                      formatter: `chosen τ = ${props.chosen} MW`,
+                                      formatter: t('chosen τ = :tau MW', {
+                                          tau: props.chosen,
+                                      }),
                                       color: theme.text.value,
                                   },
                               },
@@ -68,7 +71,7 @@ const option = computed(() => ({
                     : undefined,
         },
         {
-            name: 'Bias (predicted − MODIS)',
+            name: t('Bias (predicted − MODIS)'),
             type: 'line',
             data: props.curve.map((p) => p.bias),
             color: INSTRUMENT_COLORS.viirs,

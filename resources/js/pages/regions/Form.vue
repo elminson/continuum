@@ -72,7 +72,13 @@ function submit(): void {
 </script>
 
 <template>
-    <Head :title="region ? `Edit ${region.name}` : 'New area of interest'" />
+    <Head
+        :title="
+            region
+                ? $t('Edit :name', { name: region.name })
+                : $t('New area of interest')
+        "
+    />
 
     <div class="grid gap-4 p-4 lg:grid-cols-2">
         <form class="space-y-4" @submit.prevent="submit">
@@ -80,42 +86,48 @@ function submit(): void {
                 <h1 class="text-xl font-semibold">
                     {{
                         region
-                            ? 'Edit area of interest'
-                            : 'New area of interest'
+                            ? $t('Edit area of interest')
+                            : $t('New area of interest')
                     }}
                 </h1>
                 <p class="text-sm text-muted-foreground">
-                    Draw a rectangle on the map or type its corners in degrees.
+                    {{
+                        $t(
+                            'Draw a rectangle on the map or type its corners in degrees.',
+                        )
+                    }}
                 </p>
             </div>
 
             <div class="grid gap-2">
-                <Label for="name">Name</Label>
+                <Label for="name">{{ $t('Name') }}</Label>
                 <Input
                     id="name"
                     v-model="form.name"
                     required
                     maxlength="120"
-                    placeholder="e.g. Pantanal wetlands"
+                    :placeholder="$t('e.g. Pantanal wetlands')"
                 />
                 <InputError :message="form.errors.name" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="description">Description</Label>
+                <Label for="description">{{ $t('Description') }}</Label>
                 <textarea
                     id="description"
                     v-model="form.description"
                     rows="2"
                     class="rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
-                    placeholder="Why this area matters, season, land use…"
+                    :placeholder="
+                        $t('Why this area matters, season, land use…')
+                    "
                 />
                 <InputError :message="form.errors.description" />
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div class="grid gap-2">
-                    <Label for="west">West (lon)</Label>
+                    <Label for="west">{{ $t('West (lon)') }}</Label>
                     <Input
                         id="west"
                         v-model="form.west"
@@ -128,7 +140,7 @@ function submit(): void {
                     <InputError :message="form.errors.west" />
                 </div>
                 <div class="grid gap-2">
-                    <Label for="east">East (lon)</Label>
+                    <Label for="east">{{ $t('East (lon)') }}</Label>
                     <Input
                         id="east"
                         v-model="form.east"
@@ -141,7 +153,7 @@ function submit(): void {
                     <InputError :message="form.errors.east" />
                 </div>
                 <div class="grid gap-2">
-                    <Label for="south">South (lat)</Label>
+                    <Label for="south">{{ $t('South (lat)') }}</Label>
                     <Input
                         id="south"
                         v-model="form.south"
@@ -154,7 +166,7 @@ function submit(): void {
                     <InputError :message="form.errors.south" />
                 </div>
                 <div class="grid gap-2">
-                    <Label for="north">North (lat)</Label>
+                    <Label for="north">{{ $t('North (lat)') }}</Label>
                     <Input
                         id="north"
                         v-model="form.north"
@@ -169,7 +181,7 @@ function submit(): void {
             </div>
 
             <div class="grid gap-2">
-                <Label for="color">Colour</Label>
+                <Label for="color">{{ $t('Colour') }}</Label>
                 <input
                     id="color"
                     v-model="form.color"
@@ -181,11 +193,11 @@ function submit(): void {
 
             <div class="flex flex-wrap gap-2">
                 <Button type="submit" :disabled="form.processing || !valid">{{
-                    region ? 'Save changes' : 'Create and harmonize'
+                    region ? $t('Save changes') : $t('Create and harmonize')
                 }}</Button>
-                <Button type="button" variant="outline" @click="useMapView"
-                    >Use map view</Button
-                >
+                <Button type="button" variant="outline" @click="useMapView">{{
+                    $t('Use map view')
+                }}</Button>
             </div>
         </form>
 

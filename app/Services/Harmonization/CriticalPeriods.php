@@ -172,7 +172,7 @@ class CriticalPeriods
     private function label(CalendarPeriod $period, int $index): string
     {
         return match ($period) {
-            CalendarPeriod::Month => CarbonImmutable::create(2001, $index, 1)->format('M'),
+            CalendarPeriod::Month => CarbonImmutable::create(2001, $index, 1)?->translatedFormat('M') ?? (string) $index,
             CalendarPeriod::Week => 'W'.str_pad((string) $index, 2, '0', STR_PAD_LEFT),
             CalendarPeriod::Day => 'D'.$index,
         };

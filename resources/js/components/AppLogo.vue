@@ -15,8 +15,9 @@ const name = usePage().props.name;
         <span class="mb-0.5 truncate leading-tight font-semibold">{{
             name
         }}</span>
-        <span class="truncate text-[10px] leading-tight text-muted-foreground"
-            >MODIS + VIIRS harmonized</span
+        <span
+            class="truncate text-[10px] leading-tight text-muted-foreground"
+            >{{ $t('MODIS + VIIRS harmonized') }}</span
         >
     </div>
 </template>

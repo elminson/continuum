@@ -9,6 +9,7 @@ use App\Enums\ReferenceSensor;
 use App\Models\Alert;
 use App\Models\Region;
 use App\Services\Harmonization\HarmonizedCalendar;
+use App\Support\AlertMessage;
 use App\Support\Stats\Statistics;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -137,23 +138,8 @@ class DetectAnomalies
 
     private function message(CalendarPeriod $period, CarbonImmutable $start, float $observed, float $expected, float $z, int $years, ReferenceSensor $reference): string
     {
-        $label = match ($period) {
-            CalendarPeriod::Day => $start->format('j M Y'),
-            CalendarPeriod::Week => 'Week of '.$start->format('j M Y'),
-            CalendarPeriod::Month => $start->format('F Y'),
-        };
-
-        $multiple = $expected > 0 ? round($observed / $expected, 1) : null;
-        $scale = $reference === ReferenceSensor::Modis ? 'MODIS-equivalent' : 'VIIRS-equivalent';
-
-        return sprintf(
-            '%s: %s %s cell-days, %s the median of %d other years (z = %s).',
-            $label,
-            number_format($observed),
-            $scale,
-            $multiple === null ? 'far above' : $multiple.'x',
-            $years,
-            number_format($z, 1),
-        );
+        // Stored in English (the analyst reads it); readers get it in their own
+        // language from Alert::message().
+        return AlertMessage::describe($period, $start, $observed, $expected, $z, $years, $reference, 'en');
     }
 }

@@ -9,6 +9,7 @@ import SeverityBadge from '@/components/continuum/SeverityBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChartTheme } from '@/lib/charts';
+import { t } from '@/lib/i18n';
 import {
     INSTRUMENT_COLORS,
     formatDate,
@@ -68,8 +69,19 @@ const multiple = computed(() =>
         : null,
 );
 const scale = computed(() =>
-    props.alert.reference === 'modis' ? 'MODIS-equivalent' : 'VIIRS-equivalent',
+    props.alert.reference === 'modis'
+        ? t('MODIS-equivalent')
+        : t('VIIRS-equivalent'),
 );
+
+// Phrases that name the period ("week", "month") are separate keys so each
+// language can agree in gender; unknown periods fall back to the English.
+function periodText(
+    key: string,
+    replacements: Record<string, string | number> = {},
+): string {
+    return t(key.replace(':period', props.alert.period), replacements);
+}
 
 // Peak day of the period, used for the satellite image under the map.
 const peakDay = computed(() => {
@@ -107,7 +119,7 @@ const dailyOption = computed(() => {
         },
         yAxis: {
             type: 'value',
-            name: 'active 1 km cells',
+            name: t('active 1 km cells'),
             nameTextStyle: { color: theme.muted.value, align: 'left' },
             axisLabel: { color: theme.muted.value },
             splitLine: { lineStyle: { color: theme.grid.value } },
@@ -142,7 +154,7 @@ const historyOption = computed(() => {
             formatter: (params: { dataIndex: number }[]) => {
                 const year = years[params[0].dataIndex];
 
-                return `<strong>${year.year}</strong><br>${year.value === null ? 'no observations' : `${formatNumber(year.value)} ${scale.value} cell-days`}${year.estimated ? '<br><em>transferred from the other sensor</em>' : ''}`;
+                return `<strong>${year.year}</strong><br>${year.value === null ? t('no observations') : `${formatNumber(year.value)} ${t(':scale cell-days', { scale: scale.value })}`}${year.estimated ? `<br><em>${t('transferred from the other sensor')}</em>` : ''}`;
             },
         },
         xAxis: {
@@ -174,7 +186,9 @@ const historyOption = computed(() => {
                     lineStyle: { color: theme.text.value, type: 'dashed' },
                     label: {
                         color: theme.text.value,
-                        formatter: `median ${formatNumber(props.alert.expected)}`,
+                        formatter: t('median :value', {
+                            value: formatNumber(props.alert.expected),
+                        }),
                     },
                     data: [{ yAxis: props.alert.expected }],
                 },
@@ -209,7 +223,8 @@ const historyOption = computed(() => {
             <div class="flex flex-wrap gap-2">
                 <Button variant="outline" as-child>
                     <Link :href="alertsIndex()"
-                        ><ArrowLeft class="size-4" /> All periods</Link
+                        ><ArrowLeft class="size-4" />
+                        {{ $t('All periods') }}</Link
                     >
                 </Button>
                 <Button variant="outline" as-child>
@@ -219,12 +234,14 @@ const historyOption = computed(() => {
                                 query: { period: alert.period },
                             })
                         "
-                        ><CalendarRange class="size-4" /> Calendar</Link
+                        ><CalendarRange class="size-4" />
+                        {{ $t('Calendar') }}</Link
                     >
                 </Button>
                 <Button variant="outline" as-child>
                     <Link :href="lab(region.slug)"
-                        ><FlaskConical class="size-4" /> Calibration</Link
+                        ><FlaskConical class="size-4" />
+                        {{ $t('Calibration') }}</Link
                     >
                 </Button>
             </div>
@@ -234,18 +251,20 @@ const historyOption = computed(() => {
             <div
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
-                <p class="text-xs text-muted-foreground">Observed</p>
+                <p class="text-xs text-muted-foreground">
+                    {{ $t('Observed') }}
+                </p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums">
                     {{ formatNumber(alert.observed) }}
                 </p>
                 <p class="text-xs text-muted-foreground">
-                    {{ scale }} cell-days
+                    {{ $t(':scale cell-days', { scale }) }}
                 </p>
             </div>
             <div
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
-                <p class="text-xs text-muted-foreground">Typical</p>
+                <p class="text-xs text-muted-foreground">{{ $t('Typical') }}</p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums">
                     {{ formatNumber(alert.expected) }}
                     <span class="text-base text-muted-foreground"
@@ -253,29 +272,39 @@ const historyOption = computed(() => {
                     >
                 </p>
                 <p class="text-xs text-muted-foreground">
-                    median of {{ alert.climatology_years }} other years
+                    {{
+                        $t('median of :count other years', {
+                            count: alert.climatology_years,
+                        })
+                    }}
                 </p>
             </div>
             <div
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
-                <p class="text-xs text-muted-foreground">Departure</p>
+                <p class="text-xs text-muted-foreground">
+                    {{ $t('Departure') }}
+                </p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums">
                     {{
                         multiple === null
-                            ? 'n/a'
+                            ? $t('n/a')
                             : `×${formatNumber(multiple, 1)}`
                     }}
                 </p>
                 <p class="text-xs text-muted-foreground">
                     z = {{ formatNumber(alert.z_score, 1) }},
-                    {{ formatNumber(alert.percentile, 0) }}th percentile
+                    {{
+                        $t(':valueth percentile', {
+                            value: formatNumber(alert.percentile, 0),
+                        })
+                    }}
                 </p>
             </div>
             <div
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
-                <p class="text-xs text-muted-foreground">Where</p>
+                <p class="text-xs text-muted-foreground">{{ $t('Where') }}</p>
                 <Deferred data="detail">
                     <template #fallback
                         ><Skeleton class="mt-2 h-7 w-20"
@@ -285,13 +314,13 @@ const historyOption = computed(() => {
                     </p>
                 </Deferred>
                 <p class="text-xs text-muted-foreground">
-                    1 km cells with fire
+                    {{ $t('1 km cells with fire') }}
                 </p>
             </div>
             <div
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
-                <p class="text-xs text-muted-foreground">When</p>
+                <p class="text-xs text-muted-foreground">{{ $t('When') }}</p>
                 <Deferred data="detail">
                     <template #fallback
                         ><Skeleton class="mt-2 h-7 w-24"
@@ -301,18 +330,18 @@ const historyOption = computed(() => {
                     </p>
                 </Deferred>
                 <p class="text-xs text-muted-foreground">
-                    busiest day of the {{ alert.period }}
+                    {{ periodText('busiest day of the :period') }}
                 </p>
             </div>
         </div>
 
         <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
             <SectionCard
-                title="Where the fire was"
+                :title="$t('Where the fire was')"
                 :description="
                     detail
-                        ? `Every active 1 km cell from ${formatDate(detail.from)} to ${formatDate(detail.to)}, over the VIIRS image of the busiest day.${detail.footprint.truncated ? ' Showing the strongest cells only.' : ''}`
-                        : 'Loading the period'
+                        ? `${$t('Every active 1 km cell from :from to :to, over the VIIRS image of the busiest day.', { from: formatDate(detail.from), to: formatDate(detail.to) })}${detail.footprint.truncated ? ` ${$t('Showing the strongest cells only.')}` : ''}`
+                        : $t('Loading the period')
                 "
             >
                 <Deferred data="detail">
@@ -330,16 +359,18 @@ const historyOption = computed(() => {
             </SectionCard>
 
             <div class="flex flex-col gap-4">
-                <SectionCard v-if="alert.triage" title="AI reading">
+                <SectionCard v-if="alert.triage" :title="$t('AI reading')">
                     <template #actions>
                         <span
                             class="inline-flex items-center gap-1 text-xs text-lime-700 dark:text-lime-400"
                         >
-                            <Sparkles class="size-3.5" /> advisory
+                            <Sparkles class="size-3.5" /> {{ $t('advisory') }}
                         </span>
                     </template>
                     <p class="text-lg font-semibold">
-                        {{ CAUSE[alert.triage.cause] ?? alert.triage.cause }}
+                        {{
+                            $t(CAUSE[alert.triage.cause] ?? alert.triage.cause)
+                        }}
                     </p>
                     <p class="mt-2 flex flex-wrap gap-2 text-sm">
                         <span
@@ -351,20 +382,18 @@ const historyOption = computed(() => {
                             "
                             >{{ alert.triage.attention_label }}</span
                         >
-                        <span class="rounded-md bg-muted px-2 py-0.5"
-                            >Baseline
-                            {{
-                                alert.triage.baseline_reliable
-                                    ? 'reliable'
-                                    : 'too thin'
-                            }}</span
-                        >
-                        <span class="rounded-md bg-muted px-2 py-0.5"
-                            >Artifact risk
-                            {{
-                                formatPercent(alert.triage.artifact_probability)
-                            }}</span
-                        >
+                        <span class="rounded-md bg-muted px-2 py-0.5">{{
+                            alert.triage.baseline_reliable
+                                ? $t('Baseline reliable')
+                                : $t('Baseline too thin')
+                        }}</span>
+                        <span class="rounded-md bg-muted px-2 py-0.5">{{
+                            $t('Artifact risk :value', {
+                                value: formatPercent(
+                                    alert.triage.artifact_probability,
+                                ),
+                            })
+                        }}</span>
                     </p>
                     <p
                         v-if="alert.triage.rationale"
@@ -373,27 +402,39 @@ const historyOption = computed(() => {
                         {{ alert.triage.rationale }}
                     </p>
                     <p class="mt-3 text-xs text-muted-foreground">
-                        {{ alert.triage.model }}, self-hosted. The statistics
-                        flagged this period; the reading only explains it.
+                        {{
+                            $t(
+                                ':model, self-hosted. The statistics flagged this period; the reading only explains it.',
+                                { model: alert.triage.model },
+                            )
+                        }}
                     </p>
                 </SectionCard>
 
-                <SectionCard title="How it is measured">
+                <SectionCard :title="$t('How it is measured')">
                     <ul class="space-y-2 text-sm text-muted-foreground">
                         <li>
-                            Unit: active 1 km cells per day, both satellites of
-                            each instrument merged, harmonized to the
-                            {{ scale }} scale with the
-                            {{ alert.method }} transfer.
+                            {{
+                                $t(
+                                    'Unit: active 1 km cells per day, both satellites of each instrument merged, harmonized to the :scale scale with the :method transfer.',
+                                    { scale, method: alert.method },
+                                )
+                            }}
                         </li>
                         <li>
-                            Compared with the same {{ alert.period }} in
-                            {{ alert.climatology_years }} other years using the
-                            median and the robust spread (MAD).
+                            {{
+                                periodText(
+                                    'Compared with the same :period in :count other years using the median and the robust spread (MAD).',
+                                    { count: alert.climatology_years },
+                                )
+                            }}
                         </li>
                         <li>
-                            Only years observed for at least half the
-                            {{ alert.period }} count toward the baseline.
+                            {{
+                                periodText(
+                                    'Only years observed for at least half the :period count toward the baseline.',
+                                )
+                            }}
                         </li>
                     </ul>
                 </SectionCard>
@@ -402,8 +443,12 @@ const historyOption = computed(() => {
 
         <div class="grid gap-4 lg:grid-cols-2">
             <SectionCard
-                title="Day by day"
-                description="Active 1 km cells each sensor saw on each day of the period"
+                :title="$t('Day by day')"
+                :description="
+                    $t(
+                        'Active 1 km cells each sensor saw on each day of the period',
+                    )
+                "
             >
                 <Deferred data="detail">
                     <template #fallback
@@ -417,8 +462,12 @@ const historyOption = computed(() => {
                 </Deferred>
             </SectionCard>
             <SectionCard
-                :title="`The same ${alert.period}, every year`"
-                description="Harmonized value per year; this year in red, grey bars transferred from the other sensor"
+                :title="periodText('The same :period, every year')"
+                :description="
+                    $t(
+                        'Harmonized value per year; this year in red, grey bars transferred from the other sensor',
+                    )
+                "
             >
                 <Deferred data="detail">
                     <template #fallback

@@ -83,11 +83,11 @@ const footerNavItems: NavItem[] = [
                 <SidebarMenuItem>
                     <SidebarMenuButton
                         as-child
-                        tooltip="Sign in to create areas"
+                        :tooltip="$t('Sign in to create areas')"
                     >
                         <Link :href="login()">
                             <LogIn />
-                            <span>Sign in to add areas</span>
+                            <span>{{ $t('Sign in to add areas') }}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

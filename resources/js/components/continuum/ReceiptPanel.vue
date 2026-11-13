@@ -8,27 +8,35 @@ defineProps<{ receipt: Receipt }>();
 <template>
     <div class="space-y-3 text-xs">
         <dl class="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
-            <dt class="text-muted-foreground">Generated</dt>
+            <dt class="text-muted-foreground">{{ $t('Generated') }}</dt>
             <dd>{{ receipt.generated_at }} · {{ receipt.application }}</dd>
-            <dt class="text-muted-foreground">Area</dt>
+            <dt class="text-muted-foreground">{{ $t('Area') }}</dt>
             <dd>
-                {{ receipt.region.name }} · bbox
+                {{ receipt.region.name }} · {{ $t('bbox') }}
                 {{ receipt.region.bbox.join(', ') }} ·
                 {{ formatNumber(receipt.region.area_km2) }} km²
             </dd>
-            <dt class="text-muted-foreground">Grid</dt>
+            <dt class="text-muted-foreground">{{ $t('Grid') }}</dt>
             <dd>
-                {{ receipt.grid.harmonization_cell_km }} km harmonization cells
+                {{
+                    $t(':km km harmonization cells', {
+                        km: receipt.grid.harmonization_cell_km,
+                    })
+                }}
                 · {{ receipt.grid.cell_day_definition }}
             </dd>
-            <dt class="text-muted-foreground">Method</dt>
+            <dt class="text-muted-foreground">{{ $t('Method') }}</dt>
             <dd>
                 {{ receipt.method.label }} →
-                {{ receipt.method.reference }}-equivalent · v{{
-                    receipt.method.version
+                {{
+                    $t(':reference-equivalent', {
+                        reference: receipt.method.reference,
+                    })
                 }}
+                · v{{ receipt.method.version }}
                 <span v-if="receipt.method.factor !== null">
-                    · factor {{ formatNumber(receipt.method.factor, 3) }}
+                    · {{ $t('factor') }}
+                    {{ formatNumber(receipt.method.factor, 3) }}
                     <span
                         v-if="
                             receipt.method.ci95 &&
@@ -37,23 +45,30 @@ defineProps<{ receipt: Receipt }>();
                         >[{{ formatNumber(receipt.method.ci95[0], 3) }},
                         {{ formatNumber(receipt.method.ci95[1], 3) }}]</span
                     >
-                    · {{ receipt.method.overlap_days }} overlap days ({{
-                        receipt.method.overlap?.[0]
+                    ·
+                    {{
+                        $t(':count overlap days (:from → :to)', {
+                            count: receipt.method.overlap_days,
+                            from: receipt.method.overlap?.[0] ?? '',
+                            to: receipt.method.overlap?.[1] ?? '',
+                        })
                     }}
-                    → {{ receipt.method.overlap?.[1] }})
                 </span>
-                <span v-else> · not calibrated</span>
+                <span v-else> · {{ $t('not calibrated') }}</span>
             </dd>
-            <dt class="text-muted-foreground">Sources</dt>
+            <dt class="text-muted-foreground">{{ $t('Sources') }}</dt>
             <dd>
-                {{ receipt.sources.modis }}; {{ receipt.sources.viirs }}. Static
-                heat sources excluded.
+                {{ receipt.sources.modis }}; {{ receipt.sources.viirs }}.
+                {{ $t('Static heat sources excluded.') }}
             </dd>
         </dl>
         <details>
             <summary class="cursor-pointer text-muted-foreground">
-                Ingest runs ({{ receipt.sources.ingest_runs.length }}) and
-                caveats
+                {{
+                    $t('Ingest runs (:count) and caveats', {
+                        count: receipt.sources.ingest_runs.length,
+                    })
+                }}
             </summary>
             <ul class="mt-1 list-inside list-disc text-muted-foreground">
                 <li
@@ -62,7 +77,7 @@ defineProps<{ receipt: Receipt }>();
                 >
                     {{ run.source }} · {{ run.instrument ?? '?' }} ·
                     {{ run.from }} → {{ run.to }} ·
-                    {{ formatNumber(run.rows) }} rows
+                    {{ $t(':count rows', { count: formatNumber(run.rows) }) }}
                 </li>
             </ul>
             <ul class="mt-2 list-inside list-disc">

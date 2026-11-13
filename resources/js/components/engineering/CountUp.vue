@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { onFirstVisible, prefersReducedMotion } from '@/composables/useReveal';
+import { intlLocale } from '@/lib/i18n';
 
 /**
  * A number that counts up from zero the first time it is seen, so the eye
@@ -14,7 +15,8 @@ const props = withDefaults(
         duration?: number;
     }>(),
     {
-        format: (value: number) => Math.round(value).toLocaleString('en-US'),
+        format: (value: number) =>
+            Math.round(value).toLocaleString(intlLocale()),
         duration: 1400,
     },
 );

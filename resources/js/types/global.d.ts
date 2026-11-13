@@ -1,4 +1,5 @@
 import type { Directive } from 'vue';
+import type { t } from '@/lib/i18n';
 import type { Auth } from '@/types/auth';
 
 // Extend ImportMeta interface for Vite...
@@ -20,6 +21,8 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            locale: 'en' | 'es';
+            locales: { value: 'en' | 'es'; label: string }[];
             [key: string]: unknown;
         };
     }
@@ -34,5 +37,6 @@ declare module 'vue' {
         $inertia: typeof Router;
         $page: Page;
         $headManager: ReturnType<typeof createHeadManager>;
+        $t: typeof t;
     }
 }

@@ -11,6 +11,7 @@ import {
     formatNumber,
     formatRelative,
 } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import { home, ingestion } from '@/routes';
 import type { IngestStatus, IntakeRun } from '@/types/continuum';
 
@@ -84,7 +85,11 @@ const statusVariant = (
           : 'secondary';
 
 const statusLabel = (value: IngestStatus): string =>
-    value === 'running' ? 'Running' : value === 'failed' ? 'Failed' : 'Done';
+    value === 'running'
+        ? t('Running')
+        : value === 'failed'
+          ? t('Failed')
+          : t('Done');
 
 const runWindow = (run: IntakeRun): string => {
     if (!run.date_from) {
@@ -95,27 +100,33 @@ const runWindow = (run: IntakeRun): string => {
         return formatDate(run.date_from);
     }
 
-    return `${formatDate(run.date_from)} to ${formatDate(run.date_to)}`;
+    return t(':from to :to', {
+        from: formatDate(run.date_from),
+        to: formatDate(run.date_to),
+    });
 };
 </script>
 
 <template>
-    <Head title="Ingestion" />
+    <Head :title="$t('Ingestion')" />
 
     <div class="flex flex-col gap-4 p-4">
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <h1 class="text-xl font-semibold">Ingestion</h1>
+                <h1 class="text-xl font-semibold">{{ $t('Ingestion') }}</h1>
                 <p class="text-sm text-muted-foreground">
-                    Every pull from NASA FIRMS: area backfills, daily public
-                    feeds and bundled samples.
+                    {{
+                        $t(
+                            'Every pull from NASA FIRMS: area backfills, daily public feeds and bundled samples.',
+                        )
+                    }}
                 </p>
             </div>
             <p
                 v-if="live"
                 class="flex items-center gap-1.5 text-xs text-muted-foreground"
             >
-                <RefreshCw class="size-3" /> Updates every 10 s
+                <RefreshCw class="size-3" /> {{ $t('Updates every 10 s') }}
             </p>
         </header>
 
@@ -124,7 +135,7 @@ const runWindow = (run: IntakeRun): string => {
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
                 <p class="text-xs font-medium text-muted-foreground">
-                    Rows stored
+                    {{ $t('Rows stored') }}
                 </p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums">
                     {{ formatCompact(summary.rows_inserted) }}
@@ -134,7 +145,7 @@ const runWindow = (run: IntakeRun): string => {
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
                 <p class="text-xs font-medium text-muted-foreground">
-                    Completed runs
+                    {{ $t('Completed runs') }}
                 </p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums">
                     {{ formatNumber(summary.completed) }}
@@ -144,7 +155,7 @@ const runWindow = (run: IntakeRun): string => {
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
                 <p class="text-xs font-medium text-muted-foreground">
-                    Running now
+                    {{ $t('Running now') }}
                 </p>
                 <p
                     class="mt-1 flex items-center gap-2 text-2xl font-semibold tabular-nums"
@@ -160,7 +171,7 @@ const runWindow = (run: IntakeRun): string => {
                 class="rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
             >
                 <p class="text-xs font-medium text-muted-foreground">
-                    Failed runs
+                    {{ $t('Failed runs') }}
                 </p>
                 <p
                     class="mt-1 text-2xl font-semibold tabular-nums"
@@ -173,8 +184,12 @@ const runWindow = (run: IntakeRun): string => {
 
         <SectionCard
             v-if="batches.length > 0"
-            title="Backfills in progress"
-            description="Full FIRMS history, fetched newest first; harmonization follows automatically."
+            :title="$t('Backfills in progress')"
+            :description="
+                $t(
+                    'Full FIRMS history, fetched newest first; harmonization follows automatically.',
+                )
+            "
         >
             <ul class="space-y-3">
                 <li
@@ -196,13 +211,25 @@ const runWindow = (run: IntakeRun): string => {
                     </div>
                     <span
                         class="text-xs text-muted-foreground tabular-nums"
-                        :title="`Started ${formatDateTime(batch.started_at)}`"
+                        :title="
+                            $t('Started :date', {
+                                date: formatDateTime(batch.started_at),
+                            })
+                        "
                     >
                         {{ formatNumber(batch.done) }} /
-                        {{ formatNumber(batch.total) }} windows ·
+                        {{
+                            $t(':count windows', {
+                                count: formatNumber(batch.total),
+                            })
+                        }}
+                        ·
                         {{ formatNumber(batch.percent, 1) }}%
                         <span v-if="batch.failed > 0" class="text-destructive">
-                            · {{ batch.failed }} failed</span
+                            ·
+                            {{
+                                $t(':count failed', { count: batch.failed })
+                            }}</span
                         >
                     </span>
                 </li>
@@ -212,43 +239,61 @@ const runWindow = (run: IntakeRun): string => {
         <div class="flex flex-wrap gap-3">
             <select
                 v-model="status"
-                aria-label="Filter by status"
+                :aria-label="$t('Filter by status')"
                 class="h-8 rounded-md border border-input bg-background px-2 text-sm"
             >
-                <option value="">All statuses</option>
-                <option value="running">Running</option>
-                <option value="completed">Completed</option>
-                <option value="failed">Failed</option>
+                <option value="">{{ $t('All statuses') }}</option>
+                <option value="running">{{ $t('Running') }}</option>
+                <option value="completed">{{ $t('Completed') }}</option>
+                <option value="failed">{{ $t('Failed') }}</option>
             </select>
             <select
                 v-model="area"
-                aria-label="Filter by area"
+                :aria-label="$t('Filter by area')"
                 class="h-8 rounded-md border border-input bg-background px-2 text-sm"
             >
-                <option value="">All areas and feeds</option>
-                <option value="public-feeds">Public feeds only</option>
+                <option value="">{{ $t('All areas and feeds') }}</option>
+                <option value="public-feeds">
+                    {{ $t('Public feeds only') }}
+                </option>
                 <option v-for="a in areas" :key="a.slug" :value="a.slug">
                     {{ a.name }}
                 </option>
             </select>
         </div>
 
-        <SectionCard :title="`${formatNumber(runs.total)} ingest run(s)`">
+        <SectionCard
+            :title="
+                $t(':count ingest run(s)', { count: formatNumber(runs.total) })
+            "
+        >
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[820px] text-sm">
                     <thead>
                         <tr
                             class="border-b border-sidebar-border/70 text-left text-xs text-muted-foreground dark:border-sidebar-border"
                         >
-                            <th class="py-2 pr-3 font-medium">Status</th>
-                            <th class="py-2 pr-3 font-medium">Started</th>
-                            <th class="py-2 pr-3 font-medium">Area</th>
-                            <th class="py-2 pr-3 font-medium">Source</th>
-                            <th class="py-2 pr-3 font-medium">Dates</th>
-                            <th class="py-2 pr-3 text-right font-medium">
-                                Rows
+                            <th class="py-2 pr-3 font-medium">
+                                {{ $t('Status') }}
                             </th>
-                            <th class="py-2 text-right font-medium">Time</th>
+                            <th class="py-2 pr-3 font-medium">
+                                {{ $t('Started') }}
+                            </th>
+                            <th class="py-2 pr-3 font-medium">
+                                {{ $t('Area') }}
+                            </th>
+                            <th class="py-2 pr-3 font-medium">
+                                {{ $t('Source') }}
+                            </th>
+                            <th class="py-2 pr-3 font-medium">
+                                {{ $t('Dates') }}
+                            </th>
+                            <th class="py-2 pr-3 text-right font-medium">
+                                {{ $t('Rows') }}
+                            </th>
+                            <th class="py-2 text-right font-medium">
+                                {{ $t('Time') }}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -288,8 +333,10 @@ const runWindow = (run: IntakeRun): string => {
                                             }"
                                         />{{ run.region.name.split(' (')[0] }}
                                     </Link>
-                                    <span v-else class="text-muted-foreground"
-                                        >Global</span
+                                    <span
+                                        v-else
+                                        class="text-muted-foreground"
+                                        >{{ $t('Global') }}</span
                                     >
                                 </td>
                                 <td class="py-2 pr-3">{{ run.label }}</td>
@@ -308,9 +355,12 @@ const runWindow = (run: IntakeRun): string => {
                                         v-if="run.rows_skipped > 0"
                                         class="block text-xs text-muted-foreground"
                                         >{{
-                                            formatNumber(run.rows_skipped)
-                                        }}
-                                        skipped</span
+                                            $t(':count skipped', {
+                                                count: formatNumber(
+                                                    run.rows_skipped,
+                                                ),
+                                            })
+                                        }}</span
                                     >
                                 </td>
                                 <td
@@ -338,7 +388,7 @@ const runWindow = (run: IntakeRun): string => {
                                 colspan="7"
                                 class="py-8 text-center text-sm text-muted-foreground"
                             >
-                                No ingest runs match these filters.
+                                {{ $t('No ingest runs match these filters.') }}
                             </td>
                         </tr>
                     </tbody>
@@ -348,7 +398,7 @@ const runWindow = (run: IntakeRun): string => {
             <nav
                 v-if="runs.last_page > 1"
                 class="mt-3 flex flex-wrap gap-1 text-xs"
-                aria-label="Pagination"
+                :aria-label="$t('Pagination')"
             >
                 <template v-for="link in runs.links" :key="link.label">
                     <Link

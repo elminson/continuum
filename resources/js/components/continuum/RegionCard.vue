@@ -32,7 +32,7 @@ defineProps<{ region: Region }>();
                 </Link>
                 <p class="text-xs text-muted-foreground">
                     {{ formatNumber(region.area_km2) }} km² ·
-                    {{ region.is_preset ? 'preset' : 'your area' }}
+                    {{ region.is_preset ? $t('preset') : $t('your area') }}
                     <span v-if="region.summary?.first_date">
                         · {{ formatDate(region.summary.first_date) }} →
                         {{ formatDate(region.summary.last_date) }}</span
@@ -42,7 +42,7 @@ defineProps<{ region: Region }>();
             <Link
                 :href="lab(region.slug)"
                 class="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                title="Harmonization lab"
+                :title="$t('Harmonization lab')"
             >
                 <FlaskConical class="size-4" />
             </Link>
@@ -62,7 +62,7 @@ defineProps<{ region: Region }>();
                             region.summary.last_7_days.modis.cell_days,
                         )
                     }}
-                    cells
+                    {{ $t('cells') }}
                 </dd>
             </div>
             <div>
@@ -73,11 +73,11 @@ defineProps<{ region: Region }>();
                             region.summary.last_7_days.viirs.cell_days,
                         )
                     }}
-                    cells
+                    {{ $t('cells') }}
                 </dd>
             </div>
             <div>
-                <dt class="text-muted-foreground">Transfer</dt>
+                <dt class="text-muted-foreground">{{ $t('Transfer') }}</dt>
                 <dd class="font-medium tabular-nums">
                     <template v-if="region.summary.calibration.calibrated">
                         ×{{ formatNumber(region.summary.calibration.ratio, 2) }}
@@ -92,10 +92,12 @@ defineProps<{ region: Region }>();
                                     region.summary.calibration.mae_improvement,
                                 )
                             }}
-                            err</span
+                            {{ $t('err') }}</span
                         >
                     </template>
-                    <span v-else class="text-muted-foreground">pending</span>
+                    <span v-else class="text-muted-foreground">{{
+                        $t('pending')
+                    }}</span>
                 </dd>
             </div>
         </dl>

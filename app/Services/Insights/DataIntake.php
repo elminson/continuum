@@ -40,14 +40,20 @@ class DataIntake
     {
         // Polled every 20 s by every open dashboard: serve the cached copy and
         // refresh it after the response once it is older than CACHE_SECONDS.
-        return Cache::flexible(self::CACHE_KEY, [self::CACHE_SECONDS, 3600], fn (): array => $this->build());
+        return Cache::flexible(self::cacheKey(), [self::CACHE_SECONDS, 3600], fn (): array => $this->build());
+    }
+
+    /** Labels inside are translated, so each language keeps its own copy. */
+    public static function cacheKey(): string
+    {
+        return self::CACHE_KEY.'.'.app()->getLocale();
     }
 
     public function refresh(): void
     {
         Cache::putMany([
-            self::CACHE_KEY => $this->build(),
-            Repository::FLEXIBLE_CREATED_KEY_PREFIX.self::CACHE_KEY => now()->getTimestamp(),
+            self::cacheKey() => $this->build(),
+            Repository::FLEXIBLE_CREATED_KEY_PREFIX.self::cacheKey() => now()->getTimestamp(),
         ], 3600);
     }
 
@@ -303,10 +309,10 @@ class DataIntake
         [$kind, $rest] = array_pad(explode(':', $source, 2), 2, '');
 
         return match ($kind) {
-            'area' => 'FIRMS '.(str_ends_with($rest, '_SP') ? 'archive' : 'near-real-time').' · '.$this->firmsSourceLabel($rest),
-            'sample' => 'Bundled sample · '.$this->sampleLabel($rest),
+            'area' => (str_ends_with($rest, '_SP') ? __('FIRMS archive') : __('FIRMS near-real-time')).' · '.$this->firmsSourceLabel($rest),
+            'sample' => __('Bundled sample').' · '.$this->sampleLabel($rest),
             'public' => $this->feedLabel($source),
-            'file' => 'CSV import',
+            'file' => __('CSV import'),
             default => $source,
         };
     }
@@ -317,7 +323,7 @@ class DataIntake
         $feed = PublicFeed::tryFrom($parts[1] ?? '');
         $window = $parts[2] ?? null;
 
-        return 'Public feed · '.($feed?->label() ?? ($parts[1] ?? $source)).($window === null ? '' : " · {$window}");
+        return __('Public feed').' · '.($feed?->label() ?? ($parts[1] ?? $source)).($window === null ? '' : " · {$window}");
     }
 
     private function firmsSourceLabel(string $value): string

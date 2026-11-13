@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import VChart from 'vue-echarts';
 import { useChartTheme } from '@/lib/charts';
 import { INSTRUMENT_COLORS, formatNumber, formatPeriod } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { SeriesPoint } from '@/types/continuum';
 
 const props = withDefaults(
@@ -56,7 +57,9 @@ const option = computed(() => {
             tooltip: { show: false },
         },
         {
-            name: `Harmonized (${props.reference.toUpperCase()}-equivalent)`,
+            name: t('Harmonized (:reference-equivalent)', {
+                reference: props.reference.toUpperCase(),
+            }),
             type: 'line',
             data: harmonized,
             color: INSTRUMENT_COLORS.harmonized,
@@ -92,7 +95,7 @@ const option = computed(() => {
     if (props.showNative) {
         series.push(
             {
-                name: 'MODIS native',
+                name: t('MODIS native'),
                 type: 'line',
                 data: props.points.map((point) =>
                     props.metric === 'frp_sum'
@@ -104,7 +107,7 @@ const option = computed(() => {
                 lineStyle: { width: 1.2, type: 'dashed' },
             },
             {
-                name: 'VIIRS native',
+                name: t('VIIRS native'),
                 type: 'line',
                 data: props.points.map((point) =>
                     props.metric === 'frp_sum'
@@ -120,7 +123,7 @@ const option = computed(() => {
 
     if (props.showNaive) {
         series.push({
-            name: 'Naive merge (what the raw archive says)',
+            name: t('Naive merge (what the raw archive says)'),
             type: 'line',
             data: props.points.map((point) => point.naive),
             color: INSTRUMENT_COLORS.naive,
@@ -153,7 +156,7 @@ const option = computed(() => {
                 const point = props.points[params[0].dataIndex];
                 const rows = [
                     `<strong>${formatPeriod(point.period_start, props.period)}</strong>`,
-                    `Harmonized: <b>${formatNumber(point.harmonized, 0)}</b> cell-days${point.estimated ? ` <em>(estimated from ${point.source?.toUpperCase()}, ×${point.factor?.toFixed(3)})</em>` : ''}`,
+                    `${t('Harmonized:')} <b>${formatNumber(point.harmonized, 0)}</b> ${t('cell-days')}${point.estimated ? ` <em>${t('(estimated from :source, ×:factor)', { source: point.source?.toUpperCase() ?? '', factor: point.factor?.toFixed(3) ?? '' })}</em>` : ''}`,
                 ];
 
                 if (
@@ -162,19 +165,21 @@ const option = computed(() => {
                     point.estimated
                 ) {
                     rows.push(
-                        `95% interval: ${formatNumber(point.low, 0)} – ${formatNumber(point.high, 0)}`,
+                        `${t('95% interval:')} ${formatNumber(point.low, 0)} – ${formatNumber(point.high, 0)}`,
                     );
                 }
 
                 rows.push(
-                    `MODIS: ${point.modis ? `${formatNumber(point.modis.cell_days)} cell-days · ${formatNumber(point.modis.detections)} px · ${formatNumber(point.modis.frp_sum)} MW` : 'no coverage'}`,
+                    `MODIS: ${point.modis ? `${formatNumber(point.modis.cell_days)} ${t('cell-days')} · ${formatNumber(point.modis.detections)} px · ${formatNumber(point.modis.frp_sum)} MW` : t('no coverage')}`,
                 );
                 rows.push(
-                    `VIIRS: ${point.viirs ? `${formatNumber(point.viirs.cell_days)} cell-days · ${formatNumber(point.viirs.detections)} px · ${formatNumber(point.viirs.frp_sum)} MW` : 'no coverage'}`,
+                    `VIIRS: ${point.viirs ? `${formatNumber(point.viirs.cell_days)} ${t('cell-days')} · ${formatNumber(point.viirs.detections)} px · ${formatNumber(point.viirs.frp_sum)} MW` : t('no coverage')}`,
                 );
 
                 if (props.showNaive) {
-                    rows.push(`Naive merge: ${formatNumber(point.naive)}`);
+                    rows.push(
+                        `${t('Naive merge:')} ${formatNumber(point.naive)}`,
+                    );
                 }
 
                 return rows.join('<br>');
@@ -192,7 +197,8 @@ const option = computed(() => {
         },
         yAxis: {
             type: 'value',
-            name: props.metric === 'frp_sum' ? 'MW' : 'active 1 km cell-days',
+            name:
+                props.metric === 'frp_sum' ? 'MW' : t('active 1 km cell-days'),
             nameTextStyle: {
                 color: theme.muted.value,
                 align: 'left',

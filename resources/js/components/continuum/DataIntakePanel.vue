@@ -17,6 +17,7 @@ import {
     formatRelative,
     INSTRUMENT_COLORS,
 } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type {
     DataIntake,
     IngestStatus,
@@ -29,22 +30,22 @@ const props = defineProps<{ intake: DataIntake }>();
 
 const areaState = (area: IntakeArea): { label: string; tone: string } => {
     if (area.backfill) {
-        return { label: 'Backfilling', tone: 'text-sky-500' };
+        return { label: t('Backfilling'), tone: 'text-sky-500' };
     }
     if (area.runs.running > 0) {
-        return { label: 'Ingesting', tone: 'text-sky-500' };
+        return { label: t('Ingesting'), tone: 'text-sky-500' };
     }
     if (area.rows_inserted === 0) {
-        return { label: 'No data yet', tone: 'text-muted-foreground' };
+        return { label: t('No data yet'), tone: 'text-muted-foreground' };
     }
     if (area.history.percent >= 99.5) {
-        return { label: 'Full history', tone: 'text-lime-500' };
+        return { label: t('Full history'), tone: 'text-lime-500' };
     }
     if (area.history.windows_done === 0) {
-        return { label: 'Samples only', tone: 'text-amber-500' };
+        return { label: t('Samples only'), tone: 'text-amber-500' };
     }
 
-    return { label: 'Partial history', tone: 'text-amber-500' };
+    return { label: t('Partial history'), tone: 'text-amber-500' };
 };
 
 const modisShare = (rows: { modis: number; viirs: number }): number => {
@@ -66,7 +67,7 @@ const feed = computed(() => props.intake.public_feed);
                 <p
                     class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
                 >
-                    Rows pulled
+                    {{ $t('Rows pulled') }}
                 </p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums">
                     {{ formatCompact(totals.rows_inserted) }}
@@ -87,14 +88,17 @@ const feed = computed(() => props.intake.public_feed);
                 <p
                     class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
                 >
-                    History fetched
+                    {{ $t('History fetched') }}
                 </p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums">
                     {{ formatNumber(totals.history_percent, 1) }}%
                 </p>
                 <p class="mt-1 text-xs text-muted-foreground">
-                    of every FIRMS window across
-                    {{ totals.areas }} public areas
+                    {{
+                        $t('of every FIRMS window across :count public areas', {
+                            count: totals.areas,
+                        })
+                    }}
                 </p>
             </div>
             <div
@@ -103,7 +107,7 @@ const feed = computed(() => props.intake.public_feed);
                 <p
                     class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
                 >
-                    In flight
+                    {{ $t('In flight') }}
                 </p>
                 <p
                     class="mt-1 flex items-center gap-2 text-2xl font-semibold tabular-nums"
@@ -118,8 +122,15 @@ const feed = computed(() => props.intake.public_feed);
                     />
                 </p>
                 <p class="mt-1 text-xs text-muted-foreground">
-                    backfills · {{ totals.running_runs }} running,
-                    {{ totals.failed_runs }} failed runs
+                    {{
+                        $t(
+                            'backfills · :running running, :failed failed runs',
+                            {
+                                running: totals.running_runs,
+                                failed: totals.failed_runs,
+                            },
+                        )
+                    }}
                 </p>
             </div>
             <div
@@ -128,19 +139,26 @@ const feed = computed(() => props.intake.public_feed);
                 <p
                     class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
                 >
-                    Daily public feed
+                    {{ $t('Daily public feed') }}
                 </p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums">
                     {{ formatCompact(feed.rows_inserted) }}
                 </p>
                 <p class="mt-1 text-xs text-muted-foreground">
                     <template v-if="feed.last_run_at"
-                        >last {{ formatRelative(feed.last_run_at) }} ·
+                        >{{
+                            $t('last :time', {
+                                time: formatRelative(feed.last_run_at),
+                            })
+                        }}
+                        ·
                     </template>
-                    <template v-if="feed.next_run_at"
-                        >next {{ formatRelative(feed.next_run_at) }}</template
-                    >
-                    <template v-else>not scheduled</template>
+                    <template v-if="feed.next_run_at">{{
+                        $t('next :time', {
+                            time: formatRelative(feed.next_run_at),
+                        })
+                    }}</template>
+                    <template v-else>{{ $t('not scheduled') }}</template>
                 </p>
             </div>
         </div>
@@ -151,13 +169,25 @@ const feed = computed(() => props.intake.public_feed);
                     <tr
                         class="border-b border-sidebar-border/70 text-left text-xs text-muted-foreground dark:border-sidebar-border"
                     >
-                        <th class="py-2 pr-3 font-medium">Public area</th>
-                        <th class="py-2 pr-3 font-medium">Rows pulled</th>
-                        <th class="py-2 pr-3 font-medium">Sensor mix</th>
-                        <th class="py-2 pr-3 font-medium">History</th>
-                        <th class="py-2 pr-3 font-medium">Dates covered</th>
-                        <th class="py-2 pr-3 font-medium">Last run</th>
-                        <th class="py-2 font-medium">Status</th>
+                        <th class="py-2 pr-3 font-medium">
+                            {{ $t('Public area') }}
+                        </th>
+                        <th class="py-2 pr-3 font-medium">
+                            {{ $t('Rows pulled') }}
+                        </th>
+                        <th class="py-2 pr-3 font-medium">
+                            {{ $t('Sensor mix') }}
+                        </th>
+                        <th class="py-2 pr-3 font-medium">
+                            {{ $t('History') }}
+                        </th>
+                        <th class="py-2 pr-3 font-medium">
+                            {{ $t('Dates covered') }}
+                        </th>
+                        <th class="py-2 pr-3 font-medium">
+                            {{ $t('Last run') }}
+                        </th>
+                        <th class="py-2 font-medium">{{ $t('Status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -178,11 +208,20 @@ const feed = computed(() => props.intake.public_feed);
                             </Link>
                             <p class="text-xs text-muted-foreground">
                                 {{ formatCompact(area.area_km2) }} km² ·
-                                {{ area.runs.completed }} runs
+                                {{
+                                    $t(':count runs', {
+                                        count: area.runs.completed,
+                                    })
+                                }}
                                 <span
                                     v-if="area.runs.failed > 0"
                                     class="text-destructive"
-                                    >· {{ area.runs.failed }} failed</span
+                                    >·
+                                    {{
+                                        $t(':count failed', {
+                                            count: area.runs.failed,
+                                        })
+                                    }}</span
                                 >
                             </p>
                         </td>
@@ -191,7 +230,11 @@ const feed = computed(() => props.intake.public_feed);
                                 formatNumber(area.rows_inserted)
                             }}</span>
                             <p class="text-xs text-muted-foreground">
-                                {{ formatCompact(area.rows_skipped) }} skipped
+                                {{
+                                    $t(':count skipped', {
+                                        count: formatCompact(area.rows_skipped),
+                                    })
+                                }}
                             </p>
                         </td>
                         <td class="py-2.5 pr-3">
@@ -240,14 +283,28 @@ const feed = computed(() => props.intake.public_feed);
                             </div>
                             <p class="mt-1 text-xs text-muted-foreground">
                                 {{ formatNumber(area.history.windows_done) }} /
-                                {{ formatNumber(area.history.windows_total) }}
-                                windows since
-                                {{ area.history.earliest_possible.slice(0, 4) }}
+                                {{
+                                    $t(':count windows since :year', {
+                                        count: formatNumber(
+                                            area.history.windows_total,
+                                        ),
+                                        year: area.history.earliest_possible.slice(
+                                            0,
+                                            4,
+                                        ),
+                                    })
+                                }}
                             </p>
                             <div
                                 v-if="area.backfill"
                                 class="mt-1.5 text-xs text-sky-600 dark:text-sky-400"
-                                :title="`Started ${formatDateTime(area.backfill.started_at)}`"
+                                :title="
+                                    $t('Started :date', {
+                                        date: formatDateTime(
+                                            area.backfill.started_at,
+                                        ),
+                                    })
+                                "
                             >
                                 <div class="flex items-center gap-2">
                                     <div
@@ -266,12 +323,17 @@ const feed = computed(() => props.intake.public_feed);
                                     >
                                 </div>
                                 <span
-                                    >live backfill<span
+                                    >{{ $t('live backfill')
+                                    }}<span
                                         v-if="area.backfill.failed > 0"
                                         class="text-destructive"
                                     >
                                         ·
-                                        {{ area.backfill.failed }} failed</span
+                                        {{
+                                            $t(':count failed', {
+                                                count: area.backfill.failed,
+                                            })
+                                        }}</span
                                     ></span
                                 >
                             </div>
@@ -325,11 +387,11 @@ const feed = computed(() => props.intake.public_feed);
                             colspan="7"
                             class="py-6 text-center text-sm text-muted-foreground"
                         >
-                            No public areas yet. Run
+                            {{ $t('No public areas yet. Run') }}
                             <code class="rounded bg-muted px-1"
                                 >php artisan continuum:demo</code
                             >
-                            to seed the presets.
+                            {{ $t('to seed the presets.') }}
                         </td>
                     </tr>
                 </tbody>
@@ -341,13 +403,16 @@ const feed = computed(() => props.intake.public_feed);
                 class="flex flex-col items-start justify-center gap-2 rounded-lg border border-dashed border-sidebar-border/70 p-4 dark:border-sidebar-border"
             >
                 <p class="text-sm">
-                    Every ingest run, with filters and live backfill progress,
-                    now has its own page.
+                    {{
+                        $t(
+                            'Every ingest run, with filters and live backfill progress, now has its own page.',
+                        )
+                    }}
                 </p>
                 <Link
                     :href="ingestion()"
                     class="inline-flex items-center gap-1 text-sm font-medium hover:underline"
-                    >Open ingestion <ArrowRight class="size-4"
+                    >{{ $t('Open ingestion') }} <ArrowRight class="size-4"
                 /></Link>
             </div>
 
@@ -355,7 +420,7 @@ const feed = computed(() => props.intake.public_feed);
                 <h4
                     class="mb-2 text-xs font-semibold text-muted-foreground uppercase"
                 >
-                    Public feeds (key-free)
+                    {{ $t('Public feeds (key-free)') }}
                 </h4>
                 <ul class="space-y-1.5 text-xs">
                     <li
@@ -364,7 +429,7 @@ const feed = computed(() => props.intake.public_feed);
                         class="flex items-center justify-between gap-2"
                     >
                         <span class="min-w-0 truncate">{{
-                            item.feed.replace('Public feed · ', '')
+                            item.feed.replace(`${$t('Public feed')} · `, '')
                         }}</span>
                         <span
                             class="shrink-0 text-muted-foreground tabular-nums"
@@ -376,16 +441,22 @@ const feed = computed(() => props.intake.public_feed);
                         v-if="feed.latest.length === 0"
                         class="text-muted-foreground"
                     >
-                        No public feed pulled yet. The scheduler pulls the last
-                        24 hours of the global feeds every hour.
+                        {{
+                            $t(
+                                'No public feed pulled yet. The scheduler pulls the last 24 hours of the global feeds every hour.',
+                            )
+                        }}
                     </li>
                 </ul>
                 <p
                     class="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground"
                 >
                     <RefreshCw class="size-3" />
-                    Updates every 20 s · generated
-                    {{ formatRelative(intake.generated_at) }}
+                    {{
+                        $t('Updates every 20 s · generated :time', {
+                            time: formatRelative(intake.generated_at),
+                        })
+                    }}
                 </p>
             </div>
         </div>

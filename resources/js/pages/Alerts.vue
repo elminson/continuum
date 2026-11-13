@@ -40,14 +40,17 @@ watch([severity, region], () => {
 </script>
 
 <template>
-    <Head title="Unusual periods" />
+    <Head :title="$t('Unusual periods')" />
 
     <div class="flex flex-col gap-4 p-4">
         <header>
-            <h1 class="text-xl font-semibold">Unusual periods</h1>
+            <h1 class="text-xl font-semibold">{{ $t('Unusual periods') }}</h1>
             <p class="text-sm text-muted-foreground">
-                Weeks and months whose harmonized activity departs from the same
-                period in other years (median ± MAD).
+                {{
+                    $t(
+                        'Weeks and months whose harmonized activity departs from the same period in other years (median ± MAD).',
+                    )
+                }}
             </p>
         </header>
 
@@ -56,16 +59,16 @@ watch([severity, region], () => {
                 v-model="severity"
                 class="h-8 rounded-md border border-input bg-background px-2 text-sm"
             >
-                <option value="">All severities</option>
-                <option value="watch">Watch</option>
-                <option value="warning">Warning</option>
-                <option value="critical">Critical</option>
+                <option value="">{{ $t('All severities') }}</option>
+                <option value="watch">{{ $t('Watch') }}</option>
+                <option value="warning">{{ $t('Warning') }}</option>
+                <option value="critical">{{ $t('Critical') }}</option>
             </select>
             <select
                 v-model="region"
                 class="h-8 rounded-md border border-input bg-background px-2 text-sm"
             >
-                <option value="">All areas</option>
+                <option value="">{{ $t('All areas') }}</option>
                 <option v-for="r in regions" :key="r.slug" :value="r.slug">
                     {{ r.name }}
                 </option>
@@ -73,8 +76,12 @@ watch([severity, region], () => {
         </div>
 
         <SectionCard
-            title="Where"
-            description="Each area is coloured by its worst flagged period; click one to filter the list."
+            :title="$t('Where')"
+            :description="
+                $t(
+                    'Each area is coloured by its worst flagged period; click one to filter the list.',
+                )
+            "
         >
             <AlertsMap
                 :regions="map"
@@ -83,7 +90,11 @@ watch([severity, region], () => {
             />
         </SectionCard>
 
-        <SectionCard :title="`${alerts.meta.total} flagged period(s)`">
+        <SectionCard
+            :title="
+                $t(':count flagged period(s)', { count: alerts.meta.total })
+            "
+        >
             <AlertList :alerts="alerts.data" show-region />
             <nav
                 v-if="alerts.meta.last_page > 1"

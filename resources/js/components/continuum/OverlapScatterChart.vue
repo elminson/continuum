@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import VChart from 'vue-echarts';
 import { useChartTheme } from '@/lib/charts';
 import { INSTRUMENT_COLORS, formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { OverlapPair } from '@/types/continuum';
 
 const props = defineProps<{ pairs: OverlapPair[]; ratio: number | null }>();
@@ -23,11 +24,11 @@ const option = computed(() => {
         tooltip: {
             ...theme.tooltip.value,
             formatter: (params: { data: [number, number, string] }) =>
-                `<strong>${params.data[2]}</strong><br>VIIRS ${formatNumber(params.data[0])} · MODIS ${formatNumber(params.data[1])} cell-days`,
+                `<strong>${params.data[2]}</strong><br>${t('VIIRS :viirs · MODIS :modis cell-days', { viirs: formatNumber(params.data[0]), modis: formatNumber(params.data[1]) })}`,
         },
         xAxis: {
             type: 'value',
-            name: 'VIIRS active 1 km cell-days',
+            name: t('VIIRS active 1 km cell-days'),
             nameLocation: 'middle',
             nameGap: 28,
             max,
@@ -36,7 +37,7 @@ const option = computed(() => {
         },
         yAxis: {
             type: 'value',
-            name: 'MODIS active 1 km cell-days',
+            name: t('MODIS active 1 km cell-days'),
             nameLocation: 'middle',
             nameGap: 48,
             max,
@@ -45,14 +46,14 @@ const option = computed(() => {
         },
         series: [
             {
-                name: 'Overlap days',
+                name: t('Overlap days'),
                 type: 'scatter',
                 data: props.pairs.map((p) => [p.viirs, p.modis, p.date]),
                 color: INSTRUMENT_COLORS.harmonized,
                 symbolSize: 9,
             },
             {
-                name: '1:1 (naive merge)',
+                name: t('1:1 (naive merge)'),
                 type: 'line',
                 data: [
                     [0, 0],
@@ -65,7 +66,9 @@ const option = computed(() => {
             ...(props.ratio
                 ? [
                       {
-                          name: `Fitted ratio × ${props.ratio.toFixed(3)}`,
+                          name: t('Fitted ratio × :ratio', {
+                              ratio: props.ratio.toFixed(3),
+                          }),
                           type: 'line',
                           data: [
                               [0, 0],

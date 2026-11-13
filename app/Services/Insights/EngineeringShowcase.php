@@ -38,14 +38,20 @@ class EngineeringShowcase
      */
     public function get(): array
     {
-        return Cache::flexible(self::CACHE_KEY, [600, 86400], fn (): array => $this->build());
+        return Cache::flexible(self::cacheKey(), [600, 86400], fn (): array => $this->build());
+    }
+
+    /** Labels inside are translated, so each language keeps its own copy. */
+    public static function cacheKey(): string
+    {
+        return self::CACHE_KEY.'.'.app()->getLocale();
     }
 
     public function refresh(): void
     {
         Cache::putMany([
-            self::CACHE_KEY => $this->build(),
-            Repository::FLEXIBLE_CREATED_KEY_PREFIX.self::CACHE_KEY => now()->getTimestamp(),
+            self::cacheKey() => $this->build(),
+            Repository::FLEXIBLE_CREATED_KEY_PREFIX.self::cacheKey() => now()->getTimestamp(),
         ], 86400);
     }
 

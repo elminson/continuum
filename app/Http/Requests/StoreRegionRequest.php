@@ -33,8 +33,8 @@ class StoreRegionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'east.gt' => 'East must be greater than west (areas crossing the antimeridian are not supported).',
-            'north.gt' => 'North must be greater than south.',
+            'east.gt' => __('East must be greater than west (areas crossing the antimeridian are not supported).'),
+            'north.gt' => __('North must be greater than south.'),
         ];
     }
 }

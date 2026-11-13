@@ -42,7 +42,7 @@ class RegionSummary
         $version = $region->harmonized_at?->getTimestamp() ?? 0;
 
         return Cache::remember(
-            "continuum.region-summary.{$region->id}.{$version}",
+            "continuum.region-summary.{$region->id}.{$version}.".app()->getLocale(),
             now()->addMinutes(self::REGION_TTL_MINUTES),
             fn (): array => $this->build($region),
         );
@@ -88,7 +88,7 @@ class RegionSummary
         // The strongest alert, with the region's alert count riding along.
         $topAlert = Alert::query()
             ->where('region_id', $region->id)
-            ->select('period_start', 'severity', 'message', 'z_score')
+            ->select('period', 'period_start', 'severity', 'message', 'z_score', 'observed', 'expected', 'climatology_years', 'reference')
             ->selectRaw('count(*) over () as alert_count')
             ->orderByDesc('z_score')
             ->first();

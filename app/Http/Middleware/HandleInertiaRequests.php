@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Locale;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,6 +39,8 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'locale' => app()->getLocale(),
+            'locales' => array_map(fn (Locale $locale) => ['value' => $locale->value, 'label' => $locale->label()], Locale::cases()),
             'auth' => [
                 'user' => $request->user(),
             ],

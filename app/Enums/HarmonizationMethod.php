@@ -20,16 +20,16 @@ enum HarmonizationMethod: string
     public function label(): string
     {
         return match ($this) {
-            self::Ratio => 'Monthly ratio (bootstrap CI)',
-            self::FrpThreshold => 'FRP visibility threshold',
+            self::Ratio => __('Monthly ratio (bootstrap CI)'),
+            self::FrpThreshold => __('FRP visibility threshold'),
         };
     }
 
     public function description(): string
     {
         return match ($this) {
-            self::Ratio => 'Scales one sensor to the other with a per-month ratio of active cell-days measured while both sensors flew.',
-            self::FrpThreshold => 'Keeps only the VIIRS cell-days whose summed fire radiative power a 1 km MODIS pixel could have detected.',
+            self::Ratio => __('Scales one sensor to the other with a per-month ratio of active cell-days measured while both sensors flew.'),
+            self::FrpThreshold => __('Keeps only the VIIRS cell-days whose summed fire radiative power a 1 km MODIS pixel could have detected.'),
         };
     }
 }

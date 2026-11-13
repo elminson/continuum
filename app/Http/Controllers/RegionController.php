@@ -52,7 +52,7 @@ class RegionController extends Controller
 
         return redirect()
             ->route('regions.show', $region)
-            ->with('success', 'Area of interest created. '.$this->startBackfill($region));
+            ->with('success', __('Area of interest created.').' '.$this->startBackfill($region));
     }
 
     public function backfill(Request $request, Region $region): RedirectResponse
@@ -73,16 +73,16 @@ class RegionController extends Controller
         if (! app(AreaApiClient::class)->hasKey()) {
             HarmonizeRegionJob::dispatch($region->id);
 
-            return 'Harmonizing existing detections. Set FIRMS_MAP_KEY to fetch the full history automatically.';
+            return __('Harmonizing existing detections. Set FIRMS_MAP_KEY to fetch the full history automatically.');
         }
 
         if (($active = $planner->activeBatch($region)) !== null) {
-            return sprintf('A backfill is already running for this area (%d of %d windows done).', $active['done'], $active['total']);
+            return __('A backfill is already running for this area (:done of :total windows done).', ['done' => $active['done'], 'total' => $active['total']]);
         }
 
         $batch = $planner->dispatch($region, $planner->fullHistory($region));
 
-        return sprintf('Fetching the full FIRMS history: %d windows queued, newest first. Harmonization follows automatically.', $batch->totalJobs);
+        return __('Fetching the full FIRMS history: :count windows queued, newest first. Harmonization follows automatically.', ['count' => $batch->totalJobs]);
     }
 
     public function edit(Region $region): Response
@@ -107,7 +107,7 @@ class RegionController extends Controller
 
         return redirect()
             ->route('regions.show', $region)
-            ->with('success', $boxChanged ? 'Area updated. Re-harmonizing with the new extent.' : 'Area updated.');
+            ->with('success', $boxChanged ? __('Area updated. Re-harmonizing with the new extent.') : __('Area updated.'));
     }
 
     public function destroy(Request $request, Region $region): RedirectResponse
@@ -116,7 +116,7 @@ class RegionController extends Controller
 
         $region->delete();
 
-        return redirect()->route('regions.index')->with('success', 'Area of interest removed.');
+        return redirect()->route('regions.index')->with('success', __('Area of interest removed.'));
     }
 
     public function harmonize(Request $request, Region $region): RedirectResponse
@@ -125,6 +125,6 @@ class RegionController extends Controller
 
         HarmonizeRegionJob::dispatch($region->id);
 
-        return back()->with('success', 'Harmonization queued for '.$region->name.'.');
+        return back()->with('success', __('Harmonization queued for :name.', ['name' => $region->name]));
     }
 }

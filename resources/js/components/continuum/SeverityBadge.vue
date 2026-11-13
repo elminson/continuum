@@ -21,6 +21,6 @@ const classes = computed(() => {
         class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize"
         :class="classes"
     >
-        {{ severity }}
+        {{ $t(severity) }}
     </span>
 </template>

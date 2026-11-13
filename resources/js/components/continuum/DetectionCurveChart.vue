@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import VChart from 'vue-echarts';
 import { useChartTheme } from '@/lib/charts';
 import { INSTRUMENT_COLORS, formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { DetectionCurve } from '@/types/continuum';
 
 const props = defineProps<{ curve: DetectionCurve; chosen: number | null }>();
@@ -23,13 +24,13 @@ const option = computed(() => {
             formatter: (params: { dataIndex: number }[]) => {
                 const bin = bins[params[0].dataIndex];
 
-                return `<strong>ΣFRP ${bin.frp_from}${bin.frp_to ? `–${bin.frp_to}` : '+'} MW</strong><br>${formatNumber(bin.viirs)} VIIRS cell-days · ${formatNumber(bin.seen_by_modis)} also seen by MODIS<br>P(MODIS detects) = ${bin.probability === null ? '—' : (bin.probability * 100).toFixed(0) + '%'}`;
+                return `<strong>ΣFRP ${bin.frp_from}${bin.frp_to ? `–${bin.frp_to}` : '+'} MW</strong><br>${t(':viirs VIIRS cell-days · :modis also seen by MODIS', { viirs: formatNumber(bin.viirs), modis: formatNumber(bin.seen_by_modis) })}<br>${t('P(MODIS detects)')} = ${bin.probability === null ? '—' : (bin.probability * 100).toFixed(0) + '%'}`;
             },
         },
         xAxis: {
             type: 'category',
             data: bins.map((b) => `${b.frp_from}`),
-            name: 'VIIRS cell-day ΣFRP bin (MW, lower edge)',
+            name: t('VIIRS cell-day ΣFRP bin (MW, lower edge)'),
             nameLocation: 'middle',
             nameGap: 28,
             axisLabel: { color: theme.muted.value },
@@ -37,7 +38,7 @@ const option = computed(() => {
         yAxis: [
             {
                 type: 'value',
-                name: 'P(seen by MODIS)',
+                name: t('P(seen by MODIS)'),
                 min: 0,
                 max: 1,
                 axisLabel: {
@@ -48,14 +49,14 @@ const option = computed(() => {
             },
             {
                 type: 'value',
-                name: 'VIIRS cell-days',
+                name: t('VIIRS cell-days'),
                 axisLabel: { color: theme.muted.value },
                 splitLine: { show: false },
             },
         ],
         series: [
             {
-                name: 'VIIRS cell-days in bin',
+                name: t('VIIRS cell-days in bin'),
                 type: 'bar',
                 yAxisIndex: 1,
                 data: bins.map((b) => b.viirs),
@@ -63,7 +64,7 @@ const option = computed(() => {
                 itemStyle: { opacity: 0.35 },
             },
             {
-                name: 'Probability MODIS also detected the cell',
+                name: t('Probability MODIS also detected the cell'),
                 type: 'line',
                 data: bins.map((b) => b.probability),
                 color: INSTRUMENT_COLORS.modis,

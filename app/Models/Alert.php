@@ -6,8 +6,10 @@ use App\Enums\AlertSeverity;
 use App\Enums\CalendarPeriod;
 use App\Enums\HarmonizationMethod;
 use App\Enums\ReferenceSensor;
+use App\Support\AlertMessage;
 use Carbon\CarbonImmutable;
 use Database\Factories\AlertFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -67,6 +69,33 @@ class Alert extends Model
             'severity' => AlertSeverity::class,
             'climatology_years' => 'integer',
         ];
+    }
+
+    /**
+     * The stored message is English; other languages rebuild it from the
+     * stored figures so it reads naturally.
+     *
+     * @return Attribute<string, never>
+     */
+    protected function message(): Attribute
+    {
+        return Attribute::get(function (?string $value, array $attributes): ?string {
+            $needed = ['period', 'period_start', 'observed', 'expected', 'z_score', 'climatology_years', 'reference'];
+
+            if (app()->getLocale() === 'en' || array_diff($needed, array_keys($attributes)) !== []) {
+                return $value;
+            }
+
+            return AlertMessage::describe(
+                $this->period,
+                $this->period_start,
+                $this->observed,
+                $this->expected,
+                $this->z_score,
+                $this->climatology_years,
+                $this->reference,
+            );
+        });
     }
 
     /**

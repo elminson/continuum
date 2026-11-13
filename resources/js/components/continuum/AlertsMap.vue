@@ -12,6 +12,7 @@ import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue';
 import { basemapStyle } from '@/lib/basemap';
 import { formatNumber, formatPeriod } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { AlertMapRegion, Severity } from '@/types/continuum';
 
 setWorkerUrl(mapWorkerUrl);
@@ -127,13 +128,13 @@ function markers(): FeatureCollection {
 function popupHtml(region: AlertMapRegion): string {
     const counts = [
         region.alerts.critical
-            ? `<span style="color:${SEVERITY_COLORS.critical}">${region.alerts.critical} critical</span>`
+            ? `<span style="color:${SEVERITY_COLORS.critical}">${t(':count critical', { count: region.alerts.critical })}</span>`
             : '',
         region.alerts.warning
-            ? `<span style="color:${SEVERITY_COLORS.warning}">${region.alerts.warning} warning</span>`
+            ? `<span style="color:${SEVERITY_COLORS.warning}">${t(':count warning', { count: region.alerts.warning })}</span>`
             : '',
         region.alerts.watch
-            ? `<span style="color:${SEVERITY_COLORS.watch}">${region.alerts.watch} watch</span>`
+            ? `<span style="color:${SEVERITY_COLORS.watch}">${t(':count watch', { count: region.alerts.watch })}</span>`
             : '',
     ]
         .filter(Boolean)
@@ -141,11 +142,11 @@ function popupHtml(region: AlertMapRegion): string {
 
     const top = region.top
         ? `<div style="margin-top:4px">${formatPeriod(region.top.period_start, region.top.period)} · z = ${formatNumber(region.top.z_score, 1)}<br>${region.top.message}</div>`
-        : '<div style="margin-top:4px;opacity:.7">No unusual periods flagged</div>';
+        : `<div style="margin-top:4px;opacity:.7">${t('No unusual periods flagged')}</div>`;
 
     return `<div style="font-size:12px;line-height:1.35;max-width:240px">
-        <strong>${region.name}</strong><br>${counts || '<span style="opacity:.7">quiet</span>'}${top}
-        <div style="margin-top:4px;opacity:.6">click to filter the list</div>
+        <strong>${region.name}</strong><br>${counts || `<span style="opacity:.7">${t('quiet')}</span>`}${top}
+        <div style="margin-top:4px;opacity:.6">${t('click to filter the list')}</div>
     </div>`;
 }
 
@@ -352,18 +353,18 @@ watch(
                     class="size-2.5 rounded-full"
                     :style="{ background: item.color }"
                 />
-                {{ item.severity }} · {{ formatNumber(item.count) }}
+                {{ $t(item.severity) }} · {{ formatNumber(item.count) }}
             </span>
             <span class="flex items-center gap-1.5">
                 <span
                     class="size-2.5 rounded-full"
                     :style="{ background: QUIET }"
                 />
-                No unusual periods
+                {{ $t('No unusual periods') }}
             </span>
-            <span class="text-muted-foreground"
-                >area colour = worst severity · number = flagged periods</span
-            >
+            <span class="text-muted-foreground">{{
+                $t('area colour = worst severity · number = flagged periods')
+            }}</span>
         </div>
         <button
             v-if="selected"
@@ -371,7 +372,7 @@ watch(
             class="absolute top-2 left-2 rounded-md bg-background/85 px-2 py-1 text-xs shadow backdrop-blur hover:bg-background"
             @click="emit('select', null)"
         >
-            ← All areas
+            ← {{ $t('All areas') }}
         </button>
     </div>
 </template>

@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import VChart from 'vue-echarts';
 import { useChartTheme } from '@/lib/charts';
 import { INSTRUMENT_COLORS, formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { PeriodComparison } from '@/types/continuum';
 
 const props = defineProps<{ comparison: PeriodComparison }>();
@@ -30,7 +31,7 @@ const option = computed(() => {
             formatter: (params: { dataIndex: number }[]) => {
                 const bar = bars[params[0].dataIndex];
 
-                return `<strong>${bar.year}</strong>${bar.current ? ' (selected)' : ''}<br>${formatNumber(bar.value)} fire cell-days`;
+                return `<strong>${bar.year}</strong>${bar.current ? ` ${t('(selected)')}` : ''}<br>${t(':value fire cell-days', { value: formatNumber(bar.value) })}`;
             },
         },
         xAxis: {
@@ -69,7 +70,7 @@ const option = computed(() => {
                               },
                               label: {
                                   color: theme.text.value,
-                                  formatter: 'median',
+                                  formatter: t('median'),
                                   position: 'insideEndTop',
                               },
                               data: [{ yAxis: props.comparison.median }],

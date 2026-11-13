@@ -1,8 +1,4 @@
-const compact = new Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-});
-const full = new Intl.NumberFormat('en-US');
+import { intlLocale, t } from '@/lib/i18n';
 
 export function formatNumber(
     value: number | null | undefined,
@@ -12,7 +8,7 @@ export function formatNumber(
         return '—';
     }
 
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(intlLocale(), {
         maximumFractionDigits: digits,
         minimumFractionDigits: 0,
     }).format(value);
@@ -24,8 +20,11 @@ export function formatCompact(value: number | null | undefined): string {
     }
 
     return Math.abs(value) >= 10000
-        ? compact.format(value)
-        : full.format(value);
+        ? new Intl.NumberFormat(intlLocale(), {
+              notation: 'compact',
+              maximumFractionDigits: 1,
+          }).format(value)
+        : new Intl.NumberFormat(intlLocale()).format(value);
 }
 
 export function formatPercent(
@@ -47,7 +46,7 @@ export function formatDate(value: string | null | undefined): string {
     const [year, month, day] = value.split('-').map(Number);
 
     return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(
-        'en-US',
+        intlLocale(),
         { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' },
     );
 }
@@ -57,13 +56,13 @@ export function formatPeriod(value: string, period: string): string {
         const [year, month] = value.split('-').map(Number);
 
         return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString(
-            'en-US',
+            intlLocale(),
             { year: 'numeric', month: 'short', timeZone: 'UTC' },
         );
     }
 
     if (period === 'week') {
-        return `Week of ${formatDate(value)}`;
+        return t('Week of :date', { date: formatDate(value) });
     }
 
     return formatDate(value);
@@ -81,7 +80,7 @@ export function formatDateTime(value: string | null | undefined): string {
         return '—';
     }
 
-    return new Date(value).toLocaleString('en-US', {
+    return new Date(value).toLocaleString(intlLocale(), {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -112,10 +111,12 @@ export function formatRelative(
     ];
 
     if (abs < 45) {
-        return 'just now';
+        return t('just now');
     }
 
-    const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+    const formatter = new Intl.RelativeTimeFormat(intlLocale(), {
+        numeric: 'auto',
+    });
 
     for (let index = 0; index < units.length; index++) {
         const [limit, unit] = units[index];

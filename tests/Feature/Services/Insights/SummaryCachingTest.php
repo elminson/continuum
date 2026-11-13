@@ -4,6 +4,7 @@ use App\Enums\IngestStatus;
 use App\Models\IngestRun;
 use App\Models\Region;
 use App\Services\Firms\BackfillPlanner;
+use App\Services\Insights\DataIntake;
 use App\Services\Insights\RegionSummary;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -72,5 +73,6 @@ it('warms every dashboard cache', function () {
     $this->artisan('continuum:warm-cache')->assertSuccessful();
 
     expect(Cache::has(RegionSummary::GLOBAL_KEY))->toBeTrue()
-        ->and(Cache::has('continuum.data-intake'))->toBeTrue();
+        ->and(Cache::has(DataIntake::CACHE_KEY.'.en'))->toBeTrue()
+        ->and(Cache::has(DataIntake::CACHE_KEY.'.es'))->toBeTrue();
 });

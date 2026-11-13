@@ -73,9 +73,9 @@ class MethodReceipt
                 ])->all(),
             ],
             'caveats' => [
-                'Detections are positive-only: a period with no detections may be cloud, sensor outage or genuinely no fire. coverage_days counts the days the instrument was actually fetched for this area (or detected fire inside it); periods without coverage have no value rather than a zero, and climatologies only use covered years.',
-                'Harmonized values marked estimated are transferred from the other instrument with the stated factor and interval.',
-                'Near-real-time (NRT) records are replaced by standard-processing records when a backfill runs; values can change slightly.',
+                __('Detections are positive-only: a period with no detections may be cloud, sensor outage or genuinely no fire. coverage_days counts the days the instrument was actually fetched for this area (or detected fire inside it); periods without coverage have no value rather than a zero, and climatologies only use covered years.'),
+                __('Harmonized values marked estimated are transferred from the other instrument with the stated factor and interval.'),
+                __('Near-real-time (NRT) records are replaced by standard-processing records when a backfill runs; values can change slightly.'),
             ],
         ];
     }

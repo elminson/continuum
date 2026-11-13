@@ -11,6 +11,7 @@ import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { basemapStyle } from '@/lib/basemap';
 import { formatDate, formatNumber } from '@/lib/format';
+import { t } from '@/lib/i18n';
 
 setWorkerUrl(mapWorkerUrl);
 
@@ -191,15 +192,18 @@ function addLayers(): void {
         const span =
             p.first === p.last
                 ? formatDate(String(p.first))
-                : `${formatDate(String(p.first))} to ${formatDate(String(p.last))}`;
+                : t(':from to :to', {
+                      from: formatDate(String(p.first)),
+                      to: formatDate(String(p.last)),
+                  });
 
         new Popup({ closeButton: false, maxWidth: '260px' })
             .setLngLat(event.lngLat)
             .setHTML(
                 `<div style="font-size:12px;line-height:1.4">
-                    <strong>Burned ${p.days} day(s)</strong> · ${span}<br>
-                    ${formatNumber(Number(p.detections))} detection(s) by ${sensors}<br>
-                    Peak FRP ${formatNumber(Number(p.frp_max), 1)} MW<br>
+                    <strong>${t('Burned :count day(s)', { count: p.days })}</strong> · ${span}<br>
+                    ${t(':count detection(s) by :sensors', { count: formatNumber(Number(p.detections)), sensors })}<br>
+                    ${t('Peak FRP :value MW', { value: formatNumber(Number(p.frp_max), 1) })}<br>
                     <span style="opacity:.7">${formatNumber(Number(feature.geometry.type === 'Point' ? feature.geometry.coordinates[1] : 0), 3)}, ${formatNumber(Number(feature.geometry.type === 'Point' ? feature.geometry.coordinates[0] : 0), 3)}</span>
                 </div>`,
             )
@@ -266,12 +270,13 @@ onBeforeUnmount(() => {
                         );
                     "
                 />
-                fire radiative power
+                {{ $t('fire radiative power') }}
             </span>
-            <span class="text-muted-foreground"
-                >heat when zoomed out · dots per 1 km cell, sized by days
-                burning · click a dot</span
-            >
+            <span class="text-muted-foreground">{{
+                $t(
+                    'heat when zoomed out · dots per 1 km cell, sized by days burning · click a dot',
+                )
+            }}</span>
         </div>
     </div>
 </template>

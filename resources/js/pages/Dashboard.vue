@@ -63,7 +63,7 @@ const cellRatio = computed(() =>
 </script>
 
 <template>
-    <Head title="Overview" />
+    <Head :title="$t('Overview')" />
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
         <section
@@ -73,33 +73,43 @@ const cellRatio = computed(() =>
                 <p
                     class="text-xs font-semibold tracking-widest text-orange-500 uppercase"
                 >
-                    NASA Space Apps 2026 · Harmonization of MODIS and VIIRS hot
-                    spots
+                    {{
+                        $t(
+                            'NASA Space Apps 2026 · Harmonization of MODIS and VIIRS hot spots',
+                        )
+                    }}
                 </p>
                 <h1
                     class="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl"
                 >
-                    One continuous burning-activity record, from 2000 to today.
+                    {{
+                        $t(
+                            'One continuous burning-activity record, from 2000 to today.',
+                        )
+                    }}
                 </h1>
                 <p class="mt-2 text-sm text-muted-foreground sm:text-base">
-                    MODIS (1 km, since 2000) and VIIRS (375 m, since 2012) count
-                    the same fire differently: a single 1 km MODIS pixel becomes
-                    3–7 VIIRS pixels, and VIIRS sees fires MODIS cannot.
-                    Continuum snaps both records to one 1 km grid, calibrates a
-                    physically-grounded transfer on the years both sensors flew,
-                    and publishes a validated calendar with uncertainty for any
-                    area of interest.
+                    {{
+                        $t(
+                            'MODIS (1 km, since 2000) and VIIRS (375 m, since 2012) count the same fire differently: a single 1 km MODIS pixel becomes 3–7 VIIRS pixels, and VIIRS sees fires MODIS cannot. Continuum snaps both records to one 1 km grid, calibrates a physically-grounded transfer on the years both sensors flew, and publishes a validated calendar with uncertainty for any area of interest.',
+                        )
+                    }}
                 </p>
                 <div class="mt-4 flex flex-wrap gap-2">
                     <Button v-if="featured" as-child>
                         <Link :href="show(featured.slug)"
-                            >Open {{ featured.name.split(' (')[0] }}
+                            >{{
+                                $t('Open :name', {
+                                    name: featured.name.split(' (')[0],
+                                })
+                            }}
                             <ArrowRight class="size-4"
                         /></Link>
                     </Button>
                     <Button variant="outline" as-child>
                         <Link :href="method()"
-                            ><BookOpenText class="size-4" /> Method</Link
+                            ><BookOpenText class="size-4" />
+                            {{ $t('Method') }}</Link
                         >
                     </Button>
                     <Button variant="outline" as-child>
@@ -113,7 +123,8 @@ const cellRatio = computed(() =>
                         as-child
                     >
                         <Link :href="create()"
-                            ><Plus class="size-4" /> New area of interest</Link
+                            ><Plus class="size-4" />
+                            {{ $t('New area of interest') }}</Link
                         >
                     </Button>
                 </div>
@@ -125,34 +136,38 @@ const cellRatio = computed(() =>
 
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <KpiTile
-                label="Detections ingested"
+                :label="$t('Detections ingested')"
                 :value="formatCompact(global.detections)"
                 :hint="`${formatCompact(global.modis.detections)} MODIS · ${formatCompact(global.viirs.detections)} VIIRS`"
             />
             <KpiTile
-                label="1 km cell-days"
+                :label="$t('1 km cell-days')"
                 :value="formatCompact(global.cell_days)"
                 :hint="`${formatCompact(global.modis.cell_days)} MODIS · ${formatCompact(global.viirs.cell_days)} VIIRS`"
             />
             <KpiTile
-                label="Raw pixel inflation"
+                :label="$t('Raw pixel inflation')"
                 :value="pixelRatio ? `×${formatNumber(pixelRatio, 1)}` : '—'"
-                hint="VIIRS pixels per MODIS pixel, before harmonization"
+                :hint="$t('VIIRS pixels per MODIS pixel, before harmonization')"
                 accent="#cc79a7"
             />
             <KpiTile
-                label="After 1 km gridding"
+                :label="$t('After 1 km gridding')"
                 :value="cellRatio ? `×${formatNumber(cellRatio, 1)}` : '—'"
-                hint="what remains is sensitivity, not pixel splitting"
+                :hint="$t('what remains is sensitivity, not pixel splitting')"
                 accent="#4ade80"
             />
             <KpiTile
-                label="Record"
-                :value="global.days ? `${global.days} days` : '—'"
+                :label="$t('Record')"
+                :value="
+                    global.days
+                        ? $t(':count days', { count: global.days })
+                        : '—'
+                "
                 :hint="
                     global.first_date
-                        ? `${formatDate(global.first_date)} → ${formatDate(global.last_date)} · ${global.modis.satellites + global.viirs.satellites} satellites`
-                        : 'no data ingested yet'
+                        ? `${formatDate(global.first_date)} → ${formatDate(global.last_date)} · ${$t(':count satellites', { count: global.modis.satellites + global.viirs.satellites })}`
+                        : $t('no data ingested yet')
                 "
             />
         </div>
@@ -161,8 +176,12 @@ const cellRatio = computed(() =>
             <SectionCard
                 v-if="featured && featuredDate"
                 class="xl:col-span-2"
-                :title="`Latest day with fire activity · ${featured.name}`"
-                :description="`${formatDate(featuredDate)} · both sensors on the same 1 km grid`"
+                :title="
+                    $t('Latest day with fire activity · :name', {
+                        name: featured.name,
+                    })
+                "
+                :description="`${formatDate(featuredDate)} · ${$t('both sensors on the same 1 km grid')}`"
             >
                 <template #actions>
                     <div
@@ -179,7 +198,7 @@ const cellRatio = computed(() =>
                             "
                             @click="mapMode = mode"
                         >
-                            {{ mode }}
+                            {{ $t(mode) }}
                         </button>
                     </div>
                 </template>
@@ -193,30 +212,41 @@ const cellRatio = computed(() =>
                 <p class="mt-2 text-xs text-muted-foreground">
                     <InstrumentDot
                         instrument="modis"
-                        :label="`MODIS ${formatNumber(mapCounts.modis)} cells`"
+                        :label="`MODIS ${$t(':count cells', { count: formatNumber(mapCounts.modis) })}`"
                     />
                     ·
                     <InstrumentDot
                         instrument="viirs"
-                        :label="`VIIRS ${formatNumber(mapCounts.viirs)} cells`"
+                        :label="`VIIRS ${$t(':count cells', { count: formatNumber(mapCounts.viirs) })}`"
                     />
-                    — same day, same grid: the VIIRS surplus that survives
-                    gridding is the sensitivity gap the transfer function has to
-                    close.
+                    —
+                    {{
+                        $t(
+                            'same day, same grid: the VIIRS surplus that survives gridding is the sensitivity gap the transfer function has to close.',
+                        )
+                    }}
                 </p>
             </SectionCard>
 
             <SectionCard
-                title="Unusual periods"
-                description="Robust z-scores against the same week or month in other years"
+                :title="$t('Unusual periods')"
+                :description="
+                    $t(
+                        'Robust z-scores against the same week or month in other years',
+                    )
+                "
             >
                 <AlertList :alerts="alerts" show-region />
             </SectionCard>
         </div>
 
         <SectionCard
-            title="Areas of interest"
-            description="Presets ship with real NASA FIRMS samples; sign in to add your own."
+            :title="$t('Areas of interest')"
+            :description="
+                $t(
+                    'Presets ship with real NASA FIRMS samples; sign in to add your own.',
+                )
+            "
         >
             <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <RegionCard
@@ -228,8 +258,12 @@ const cellRatio = computed(() =>
         </SectionCard>
 
         <SectionCard
-            title="Data intake"
-            description="How much NASA FIRMS data the public areas have pulled, and what is still arriving"
+            :title="$t('Data intake')"
+            :description="
+                $t(
+                    'How much NASA FIRMS data the public areas have pulled, and what is still arriving',
+                )
+            "
         >
             <Deferred data="intake">
                 <template #fallback>

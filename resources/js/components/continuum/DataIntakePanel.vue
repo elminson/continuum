@@ -378,7 +378,7 @@ const feed = computed(() => props.intake.public_feed);
                                 :title="area.last_error"
                             >
                                 <AlertTriangle class="inline size-3" />
-                                {{ area.last_error }}
+                                {{ $t('Last run failed') }}
                             </p>
                         </td>
                     </tr>

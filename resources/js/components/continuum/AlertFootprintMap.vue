@@ -28,6 +28,9 @@ const props = withDefaults(
 
 const container = ref<HTMLDivElement | null>(null);
 let map: MapLibreMap | null = null;
+// The map can mount before its grid column has its final width; MapLibre only
+// tracks window resizes, so follow the container itself.
+let resizeObserver: ResizeObserver | null = null;
 
 function regionOutline(): FeatureCollection {
     const [w, s, e, n] = props.regionBox;
@@ -240,9 +243,14 @@ onMounted(() => {
     });
     map.addControl(new NavigationControl({ showCompass: false }), 'top-right');
     map.once('style.load', addLayers);
+
+    resizeObserver = new ResizeObserver(() => map?.resize());
+    resizeObserver.observe(container.value);
 });
 
 onBeforeUnmount(() => {
+    resizeObserver?.disconnect();
+    resizeObserver = null;
     map?.remove();
     map = null;
 });

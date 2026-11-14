@@ -103,7 +103,57 @@ Plus the framework tables (users, sessions, cache, jobs, job_batches, failed_job
 | `BackfillRegionWindowJob(regionId, source, from, days)` | `firms:backfill` (one per 5-day window and source, dispatched as a `Bus::batch` named `backfill:{slug}`; purges NRT rows first when the source is `_SP`) | `Batchable`, `#[Tries(5)] #[Backoff([60, 300, 900])] #[Timeout(600)]` |
 | `HarmonizeRegionJob(regionId, aggregate = true)`        | region created / box changed / "Re-run" button, and `finally` of a backfill batch                                                                        | `ShouldBeUnique` per region, `#[Tries(2)] #[Timeout(3600)]`           |
 
-`routes/console.php` schedules `firms:ingest-public --window=48h --presets` daily at 03:00 UTC and `continuum:harmonize` at 04:30 UTC (`withoutOverlapping`, `onOneServer`). The public API is throttled at 120 requests/minute per user id or IP (`AppServiceProvider`). Cache and queue use the `database` driver by default; Redis is a drop-in via `.env`.
+`routes/console.php` schedules, all `withoutOverlapping` and `onOneServer`:
+
+| Command | Production schedule (UTC) |
+| --- | --- |
+| `firms:ingest-public --presets --window=24h` | every hour at :05 |
+| `continuum:harmonize --from=<3 days ago>` | `25 */6 * * *` (`CONTINUUM_HARMONIZE_CRON`) |
+| `continuum:warm-cache` | every 5 minutes |
+| `continuum:triage-alerts` | every hour at :50 |
+
+The public API is throttled at 120 requests/minute per user id or IP (`AppServiceProvider`). Cache and queue use the `database` driver by default; Redis is a drop-in via `.env`.
+
+## Deployment and data refresh
+
+```mermaid
+flowchart LR
+    subgraph Dev[Developer]
+        BR[feature branch] --> PR[pull request]
+    end
+    subgraph GH[GitHub · elminson/continuum]
+        PR --> CI[GitHub Actions CI<br/>Pest · PHPStan · lint · build]
+        CI --> MAIN[main]
+    end
+    subgraph SRV[Linux server · continuum.techspark.dev]
+        MAIN -->|git fetch + reset --hard origin/main| CODE[app code]
+        CODE --> BUILD[npm run build<br/>artisan optimize<br/>reload php-fpm<br/>warm-cache]
+        BUILD --> WEB[Nginx + PHP-FPM<br/>Laravel + Inertia/Vue]
+        CRON[cron · schedule:run<br/>every minute] --> ING[firms:ingest-public<br/>hourly]
+        CRON --> HAR[continuum:harmonize<br/>every 6 h]
+        CRON --> WARM[warm-cache<br/>every 5 min]
+        Q[continuum-queue<br/>systemd worker] --> BF[backfill jobs<br/>new areas, full history]
+        ING --> DB[(PostgreSQL)]
+        BF --> DB
+        DB --> HAR --> DB
+        DB --> WEB
+    end
+    subgraph NASA[NASA open data]
+        FEED[FIRMS public feeds<br/>MODIS · VIIRS NOAA-20/21]
+        AREA[FIRMS Area API<br/>2000 → today]
+        GIBS[GIBS imagery]
+    end
+    FEED --> ING
+    AREA --> BF
+    WEB --> USER[judges · users · API clients]
+    GIBS -.map tiles in the browser.-> USER
+```
+
+1. **Ship.** Every change goes through a pull request; CI runs the tests, static analysis, lint and a frontend build. Only `main` is deployed.
+2. **Deploy.** The server resets its checkout to `origin/main`. Then `npm run build` if the frontend changed, `artisan optimize`, a PHP-FPM reload and `continuum:warm-cache`, so the first visitor never waits for cold aggregates.
+3. **Refresh.** Cron runs the Laravel scheduler every minute. It pulls the last 24 h of FIRMS public feeds each hour (fingerprints make overlapping pulls idempotent), re-harmonizes the last three days every six hours, and keeps the dashboard cache warm.
+4. **Backfill.** A new area queues one job per 5-day window and source against the FIRMS Area API. The systemd queue worker runs them, then harmonizes the area.
+5. **Serve.** Pages and the JSON API read from PostgreSQL. NASA GIBS tiles load straight into the visitor's browser under the fire maps.
 
 ## Authorization
 

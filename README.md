@@ -124,7 +124,7 @@ curl "http://localhost:8000/api/v1/hotspots?bbox=-70,-35,-55,-15&date=2026-09-24
 
 ## Architecture
 
-Ingestion (`CsvParser` → `IngestDetections`, idempotent on a per-pixel fingerprint) feeds a `detections` table; `AggregateCellDays` collapses pixels to one row per (grid cell, day, satellite); `BuildCalendar` rolls cell-days into per-instrument day/week/month entries with coverage days and an FRP histogram; `CalibrateRegion` fits and validates the transfer functions; `HarmonizedCalendar`, `CriticalPeriods` and `DetectAnomalies` derive everything the pages and the API show. Details, table layout and a flowchart in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); the science in [docs/METHOD.md](docs/METHOD.md); data sources in [docs/DATA.md](docs/DATA.md).
+Ingestion (`CsvParser` → `IngestDetections`, idempotent on a per-pixel fingerprint) feeds a `detections` table; `AggregateCellDays` collapses pixels to one row per (grid cell, day, satellite); `BuildCalendar` rolls cell-days into per-instrument day/week/month entries with coverage days and an FRP histogram; `CalibrateRegion` fits and validates the transfer functions; `HarmonizedCalendar`, `CriticalPeriods` and `DetectAnomalies` derive everything the pages and the API show. Details, table layout, the data flowchart and a [deployment and data-refresh diagram](docs/ARCHITECTURE.md#deployment-and-data-refresh) (repo → server → NASA FIRMS) in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); the science in [docs/METHOD.md](docs/METHOD.md); data sources in [docs/DATA.md](docs/DATA.md).
 
 ## Tech stack
 

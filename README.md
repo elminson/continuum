@@ -6,6 +6,8 @@ Built for the **NASA Space Apps Challenge 2026** — _Harmonization of MODIS and
 
 **Live app:** [continuum.techspark.dev](https://continuum.techspark.dev) · no login needed to explore. To draw your own area, sign in with the shared judge account `judge@continuum.techspark.dev` / `SpaceApps2026!` (up to three areas of about 10° × 10°). English and Spanish.
 
+**Demo video (30 s):** [English](docs/video/continuum-demo-en.mp4) · [Español, English subtitles](docs/video/continuum-demo-es.mp4) (AI-generated voice-over).
+
 **Presentation:** [English](docs/presentation/continuum-en.pdf) · [Español](docs/presentation/continuum-es.pdf) (also as HTML in `docs/presentation/`).
 
 ## Challenge

@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Deferred, Head, Link, setLayoutProps } from '@inertiajs/vue3';
+import { Deferred, Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
 import { ArrowLeft } from '@lucide/vue';
 import { computed } from 'vue';
 import DetectionCurveChart from '@/components/continuum/DetectionCurveChart.vue';
 import FactorTable from '@/components/continuum/FactorTable.vue';
 import KpiTile from '@/components/continuum/KpiTile.vue';
+import RetirementChart from '@/components/continuum/RetirementChart.vue';
 import OverlapScatterChart from '@/components/continuum/OverlapScatterChart.vue';
 import SectionCard from '@/components/continuum/SectionCard.vue';
 import ThresholdCurveChart from '@/components/continuum/ThresholdCurveChart.vue';
@@ -16,6 +17,7 @@ import { index, lab, show } from '@/routes/regions';
 import type {
     DetectionCurve,
     Factor,
+    ModisRetirement,
     OverlapPair,
     Region,
     ThresholdPoint,
@@ -27,6 +29,7 @@ const props = defineProps<{
     factors: Factor[];
     thresholdCurve: ThresholdPoint[];
     detectionCurve?: DetectionCurve;
+    retirement?: ModisRetirement;
 }>();
 
 setLayoutProps({
@@ -63,6 +66,13 @@ const sums = computed(() => ({
     modis: props.pairs.reduce((s, p) => s + p.modis, 0),
     viirs: props.pairs.reduce((s, p) => s + p.viirs, 0),
 }));
+function retireIn(year: number): void {
+    router.reload({
+        only: ['retirement'],
+        data: { retire: year },
+    });
+}
+
 const best = computed(() =>
     props.thresholdCurve.length > 0
         ? props.thresholdCurve.reduce((a, b) => (b.mae < a.mae ? b : a))
@@ -219,6 +229,99 @@ const best = computed(() =>
                         }}
                     </p>
                 </div>
+            </Deferred>
+        </SectionCard>
+
+        <SectionCard
+            :title="$t('When MODIS retires')"
+            :description="
+                $t(
+                    'MODIS is near the end of its life. Pretend it stopped on 1 January of a chosen year: the ratio is refitted on earlier days only, every later month is rebuilt from VIIRS alone, and the result is scored against the MODIS record that really exists.',
+                )
+            "
+        >
+            <Deferred data="retirement">
+                <template #fallback>
+                    <Skeleton class="h-72 w-full" />
+                </template>
+                <div v-if="retirement?.available" class="flex flex-col gap-4">
+                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                        <span class="text-muted-foreground">{{
+                            $t('MODIS stops in')
+                        }}</span>
+                        <Button
+                            v-for="year in retirement.years"
+                            :key="year"
+                            size="sm"
+                            :variant="
+                                year === retirement.year ? 'default' : 'outline'
+                            "
+                            @click="retireIn(year)"
+                            >{{ year }}</Button
+                        >
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        <KpiTile
+                            :label="$t('Total after the cutoff')"
+                            :value="
+                                retirement.total_error === null ||
+                                retirement.total_error === undefined
+                                    ? '—'
+                                    : `${retirement.total_error >= 0 ? '+' : '−'}${formatPercent(Math.abs(retirement.total_error), 1)}`
+                            "
+                            :hint="
+                                $t(
+                                    ':estimated estimated vs :actual real MODIS cell-days',
+                                    {
+                                        estimated: formatNumber(
+                                            retirement.estimated_total,
+                                        ),
+                                        actual: formatNumber(
+                                            retirement.actual_total,
+                                        ),
+                                    },
+                                )
+                            "
+                            accent="#4ade80"
+                        />
+                        <KpiTile
+                            :label="$t('Daily error vs naive')"
+                            :value="`−${formatPercent(retirement.mae_improvement)}`"
+                            :hint="
+                                $t(
+                                    ':days unseen days, fitted on :train earlier days',
+                                    {
+                                        days: formatNumber(
+                                            retirement.test_days,
+                                        ),
+                                        train: formatNumber(
+                                            retirement.train_days,
+                                        ),
+                                    },
+                                )
+                            "
+                            accent="#3b82f6"
+                        />
+                        <KpiTile
+                            :label="$t('Monthly correlation')"
+                            :value="`r ${formatNumber(retirement.monthly_correlation, 2)}`"
+                            :hint="
+                                $t(
+                                    'VIIRS-only estimate vs real MODIS, by month',
+                                )
+                            "
+                            accent="#f97316"
+                        />
+                    </div>
+                    <RetirementChart :points="retirement.points ?? []" />
+                </div>
+                <p v-else class="text-sm text-muted-foreground">
+                    {{
+                        $t(
+                            'Not enough overlap days yet to simulate the end of MODIS for this area.',
+                        )
+                    }}
+                </p>
             </Deferred>
         </SectionCard>
 

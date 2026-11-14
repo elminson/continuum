@@ -20,7 +20,8 @@ it('renders the harmonization lab with the overlap pairs and threshold curve', f
             ->has('thresholdCurve', 26)
             ->where('thresholdCurve.0.predicted', 40)
             ->where('thresholdCurve.0.observed', 10)
-            ->missing('detectionCurve'));
+            ->missing('detectionCurve')
+            ->missing('retirement'));
 });
 
 it('forbids the lab of a private region to guests', function () {

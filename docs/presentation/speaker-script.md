@@ -38,7 +38,7 @@ Si la red falla: seguir con las diapositivas, ya muestran lo mismo.
 Todo viene de datos abiertos de la NASA: FIRMS, con MODIS y VIIRS, más de 26 millones de detecciones, e imágenes GIBS para los mapas. El sitio se actualiza cada hora. Cuando el satélite Suomi NPP dejó de enviar datos el 2 de noviembre, pasamos a NOAA-20 y NOAA-21. El código es abierto y tiene una API pública.
 
 **Diapositiva 7 — Lo que sigue (25 s) · E**
-Queremos que cualquier agencia de incendios del Caribe pueda apuntar Continuum a su territorio, empezando por República Dominicana y Haití. Y cuando MODIS se retire, el mismo método mantiene la escala de 26 años solo con VIIRS.
+Queremos que cualquier agencia de incendios del Caribe pueda apuntar Continuum a su territorio, empezando por República Dominicana y Haití. Y hay prisa: la NASA planea apagar MODIS hacia enero de 2027, en unos dos meses. Ya lo probamos: simulamos el apagado y, solo con VIIRS, Continuum mantiene la escala de 26 años con un error diario entre 62 y 89 por ciento menor que un cambio ingenuo.
 Pueden probarlo ahora mismo en continuum.techspark.dev; el acceso para jueces está en la pantalla. Muchas gracias.
 
 ### Preguntas probables
@@ -46,6 +46,7 @@ Pueden probarlo ahora mismo en continuum.techspark.dev; el acceso para jueces es
 - **¿Qué pasa con las nubes?** Los datos de fuego activo solo dicen dónde hubo fuego. Lo indicamos en la sección de limitaciones; el siguiente paso son máscaras de nubes por celda.
 - **¿Usaron IA?** Sí: como asistente de programación, para la voz del video y para redactar las diapositivas y los textos, y lo declaramos. Hay una lectura de IA opcional en las alertas, marcada como orientativa: la estadística detecta el periodo y el modelo solo lo explica.
 - **¿Lo hicieron durante el evento?** La mayor parte de la app la construimos antes, desde septiembre; lo explicamos con fechas en docs/BUILD-TIMELINE.md. Este fin de semana preparamos las áreas, la presentación y los videos.
+- **¿Cuándo se apaga MODIS?** Según la NASA, Aqua alrededor de agosto–septiembre de 2026 y Terra hacia enero de 2027; hoy ambos siguen enviando datos. En la página Lab de cada área, "Cuando MODIS se retire" muestra la simulación.
 - **¿Funciona en otra región?** Sí: cualquier usuario dibuja un recuadro y el sistema descarga y armoniza su historia completa.
 
 ---
@@ -84,7 +85,7 @@ If the network fails: stay on the slides; they show the same thing.
 Everything comes from NASA open data: FIRMS, with MODIS and VIIRS, more than 26 million detections, and GIBS imagery for the maps. The site updates every hour. When Suomi NPP stopped sending data on 2 November, we moved to NOAA-20 and NOAA-21. The code is open source with a public API.
 
 **Slide 7 — What's next (25 s) · E**
-We want any fire agency in the Caribbean to point Continuum at its own territory, starting with the Dominican Republic and Haiti. And when MODIS retires, the same method keeps the 26-year scale with VIIRS alone.
+We want any fire agency in the Caribbean to point Continuum at its own territory, starting with the Dominican Republic and Haiti. And it's urgent: NASA plans to shut down MODIS around January 2027, about two months from now. We already tested it: we simulate the shutdown, and with VIIRS alone Continuum keeps the 26-year scale with a daily error 62 to 89 percent lower than a naive switch.
 You can try it right now at continuum.techspark.dev; the judge login is on the screen. Thank you.
 
 ### Likely questions
@@ -92,4 +93,5 @@ You can try it right now at continuum.techspark.dev; the judge login is on the s
 - **What about clouds?** Active-fire data only says where fire was seen. We state that in the limitations; per-cell cloud masks are the next step.
 - **Did you use AI?** Yes: as a coding assistant, for the video voice, and to draft the slides and texts, and we disclosed it. There's an optional AI reading on alerts, labelled advisory: the statistics flag the period, the model only explains it.
 - **Did you build it during the event?** Most of the app was built before, from September; docs/BUILD-TIMELINE.md gives the dates. This weekend we prepared the areas, the presentation and the videos.
+- **When does MODIS shut down?** NASA plans Aqua around August–September 2026 and Terra around January 2027; both are still sending data today. Each area's Lab page, "When MODIS retires", shows the simulation.
 - **Does it work elsewhere?** Yes: any user draws a box and the system fetches and harmonizes its full history.

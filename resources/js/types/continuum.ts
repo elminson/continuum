@@ -208,6 +208,34 @@ export type OverlapPair = {
     viirs: number;
 };
 
+export type RetirementPoint = {
+    period_start: string;
+    modis: number;
+    viirs: number | null;
+    estimate: number | null;
+    low: number | null;
+    high: number | null;
+    retired: boolean;
+};
+
+export type ModisRetirement = {
+    available: boolean;
+    years: number[];
+    year: number | null;
+    cutoff?: string;
+    train_days?: number;
+    test_days?: number;
+    factor?: number;
+    actual_total?: number;
+    estimated_total?: number;
+    total_error?: number | null;
+    daily_mae?: number;
+    naive_mae?: number;
+    mae_improvement?: number;
+    monthly_correlation?: number;
+    points?: RetirementPoint[];
+};
+
 export type ThresholdPoint = {
     tau: number;
     mae: number;

@@ -786,5 +786,19 @@
     "The demo account cannot change its sign-in details.": "La cuenta de demostración no puede cambiar sus datos de acceso.",
     "The demo account can keep :max areas. Delete one to add another.": "La cuenta de demostración puede tener :max áreas. Elimina una para agregar otra.",
     "Demo areas are limited to about 10° × 10°. Draw a smaller box.": "Las áreas de demostración tienen un límite de unos 10° × 10°. Dibuja un recuadro más pequeño.",
-    "Last run failed": "La última ejecución falló"
+    "Last run failed": "La última ejecución falló",
+    "When MODIS retires": "Cuando MODIS se retire",
+    "MODIS is near the end of its life. Pretend it stopped on 1 January of a chosen year: the ratio is refitted on earlier days only, every later month is rebuilt from VIIRS alone, and the result is scored against the MODIS record that really exists.": "MODIS está cerca del final de su vida útil. Suponemos que dejó de funcionar el 1 de enero de un año elegido: la razón se reajusta solo con los días anteriores, cada mes posterior se reconstruye solo con VIIRS y el resultado se compara con el registro real de MODIS.",
+    "MODIS stops in": "MODIS se apaga en",
+    "Total after the cutoff": "Total después del corte",
+    ":estimated estimated vs :actual real MODIS cell-days": ":estimated estimadas frente a :actual celdas-día reales de MODIS",
+    "Daily error vs naive": "Error diario frente a la mezcla ingenua",
+    ":days unseen days, fitted on :train earlier days": ":days días no vistos, ajustado con :train días anteriores",
+    "Monthly correlation": "Correlación mensual",
+    "VIIRS-only estimate vs real MODIS, by month": "Estimación solo con VIIRS frente a MODIS real, por mes",
+    "Not enough overlap days yet to simulate the end of MODIS for this area.": "Aún no hay suficientes días en común para simular el fin de MODIS en esta área.",
+    "MODIS (real)": "MODIS (real)",
+    "VIIRS only → MODIS scale": "Solo VIIRS → escala MODIS",
+    "MODIS off (simulated)": "MODIS apagado (simulado)",
+    "cell-days / month": "celdas-día / mes"
 }

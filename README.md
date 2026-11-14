@@ -162,6 +162,9 @@ npm run check               # vite-plus lint + format check
 - **Code:** written with Claude Code (Anthropic) as a coding assistant; those commits carry a `Co-Authored-By: Claude` line.
 - **In the app:** the optional "AI reading" on an unusual period comes from a self-hosted open model (Gemma 4 26B on Ollama) and is labelled _advisory_. The statistics flag the period; the model only explains it.
 - **Demo video:** the narration is AI-generated text-to-speech, stated on screen and in the file metadata; every visual is a real screenshot of the app.
+- **Presentation and docs:** the slides, the submission text, this README and the speaker script were drafted with Claude and edited by the team.
+
+Most of the app was built before the hackathon weekend; see the [build timeline](docs/BUILD-TIMELINE.md).
 
 ## License
 

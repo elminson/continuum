@@ -44,7 +44,8 @@ Pueden probarlo ahora mismo en continuum.techspark.dev; el acceso para jueces es
 ### Preguntas probables
 - **¿Por qué confiar en la armonización?** Se valida con más de 1.200 días reservados por área, y cada exportación lleva su "recibo del método": fuentes, factores, intervalo y error.
 - **¿Qué pasa con las nubes?** Los datos de fuego activo solo dicen dónde hubo fuego. Lo indicamos en la sección de limitaciones; el siguiente paso son máscaras de nubes por celda.
-- **¿Usaron IA?** Sí, como asistente de programación y para la voz del video, y lo declaramos. Hay una lectura de IA opcional en las alertas, marcada como orientativa: la estadística detecta el periodo y el modelo solo lo explica.
+- **¿Usaron IA?** Sí: como asistente de programación, para la voz del video y para redactar las diapositivas y los textos, y lo declaramos. Hay una lectura de IA opcional en las alertas, marcada como orientativa: la estadística detecta el periodo y el modelo solo lo explica.
+- **¿Lo hicieron durante el evento?** La mayor parte de la app la construimos antes, desde septiembre; lo explicamos con fechas en docs/BUILD-TIMELINE.md. Este fin de semana preparamos las áreas, la presentación y los videos.
 - **¿Funciona en otra región?** Sí: cualquier usuario dibuja un recuadro y el sistema descarga y armoniza su historia completa.
 
 ---
@@ -89,5 +90,6 @@ You can try it right now at continuum.techspark.dev; the judge login is on the s
 ### Likely questions
 - **Why trust the harmonization?** It's validated on more than 1,200 held-out days per area, and every export carries a method receipt: sources, factors, interval and error.
 - **What about clouds?** Active-fire data only says where fire was seen. We state that in the limitations; per-cell cloud masks are the next step.
-- **Did you use AI?** Yes, as a coding assistant and for the video voice, and we disclosed it. There's an optional AI reading on alerts, labelled advisory: the statistics flag the period, the model only explains it.
+- **Did you use AI?** Yes: as a coding assistant, for the video voice, and to draft the slides and texts, and we disclosed it. There's an optional AI reading on alerts, labelled advisory: the statistics flag the period, the model only explains it.
+- **Did you build it during the event?** Most of the app was built before, from September; docs/BUILD-TIMELINE.md gives the dates. This weekend we prepared the areas, the presentation and the videos.
 - **Does it work elsewhere?** Yes: any user draws a box and the system fetches and harmonizes its full history.

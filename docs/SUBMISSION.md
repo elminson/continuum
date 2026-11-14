@@ -54,6 +54,11 @@ Yes.
 - **In the app:** the optional "AI reading" on unusual periods uses a self-hosted open model (Gemma 4 26B, gemma4:26b-a4b, through Ollama) and is labelled "advisory". The statistics flag the period; the model only explains it.
 - **Demo video:** the narration is AI-generated text-to-speech (Microsoft neural voices). This is stated on screen, in the video description and in the file metadata. Every visual is a real screenshot of the app.
 - **Translation:** the Spanish interface text was drafted with AI assistance.
+- **Presentation and docs:** the slides, this submission text, the README and the speaker script were drafted with Claude and edited by the team. Slide images are real screenshots of the app and NASA GIBS imagery.
+
+## When it was built
+
+Most of the app was built before the hackathon weekend, from 29 September 2026. During the event (14–15 November) we prepared the public areas, the submission, the presentation and the demo videos. Details and dates: https://github.com/elminson/continuum/blob/main/docs/BUILD-TIMELINE.md
 
 ## NASA Data
 

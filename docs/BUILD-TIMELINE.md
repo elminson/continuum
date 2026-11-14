@@ -21,6 +21,7 @@ Most of Continuum was built before the hackathon weekend (14–15 November 2026)
 - Made the 7-slide presentation in English and Spanish.
 - Made the 30-second demo videos in English and Spanish (Spanish with English subtitles).
 - Wrote the speaker script for the in-person presentation.
+- Built the MODIS retirement test: refit the ratio on earlier years only, rebuild later years from VIIRS alone, score against real MODIS (Lab page, API, tests, [note](MODIS-RETIREMENT.md)).
 - Kept the live site current with hourly NASA FIRMS data.
 
 ## Use of AI

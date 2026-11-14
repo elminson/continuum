@@ -44,6 +44,12 @@ const endpoints = [
     },
     {
         method: 'GET',
+        path: '/regions/{slug}/modis-retirement',
+        description:
+            'Simulated MODIS shutdown. Query: year. The ratio is refitted on days before 1 January of that year, later months are rebuilt from VIIRS alone and scored against the real MODIS record.',
+    },
+    {
+        method: 'GET',
         path: '/regions/{slug}/critical-periods',
         description:
             "Climatological season, peak, onset and the latest period's position. Query: period, method, reference.",

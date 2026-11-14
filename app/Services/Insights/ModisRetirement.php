@@ -2,7 +2,9 @@
 
 namespace App\Services\Insights;
 
-use App\Actions\Harmonization\CalibrateRegion;
+use App\Enums\CalendarPeriod;
+use App\Enums\Instrument;
+use App\Models\CalendarEntry;
 use App\Models\CalibrationFactor;
 use App\Models\Region;
 use App\Support\Stats\Statistics;
@@ -22,8 +24,6 @@ class ModisRetirement
     private const int MIN_TRAIN_DAYS = 365;
 
     private const int MIN_TEST_DAYS = 180;
-
-    public function __construct(private CalibrateRegion $calibrate) {}
 
     /**
      * Cutoff years with at least a year of overlap before and half a year after.
@@ -124,14 +124,36 @@ class ModisRetirement
     }
 
     /**
+     * Overlap days (both instruments covered), read without hydrating models.
+     *
      * @return list<array{date: string, month: int, modis: int, viirs: int}>
      */
     private function pairs(Region $region): array
     {
-        return array_map(
-            fn (array $pair): array => ['date' => $pair['date'], 'month' => $pair['month'], 'modis' => $pair['modis'], 'viirs' => $pair['viirs']],
-            $this->calibrate->overlapPairs($region),
-        );
+        $days = [];
+
+        CalendarEntry::query()
+            ->toBase()
+            ->where('region_id', $region->id)
+            ->where('period', CalendarPeriod::Day->value)
+            ->where('period_start', '>=', Instrument::Viirs->recordStart())
+            ->where('coverage_days', '>', 0)
+            ->orderBy('period_start')
+            ->get(['period_start', 'instrument', 'cell_days'])
+            ->each(function (object $row) use (&$days): void {
+                $days[substr((string) $row->period_start, 0, 10)][$row->instrument] = (int) $row->cell_days;
+            });
+
+        $pairs = [];
+
+        foreach ($days as $date => $counts) {
+            if (isset($counts[Instrument::Modis->value], $counts[Instrument::Viirs->value])) {
+                $date = (string) $date;
+                $pairs[] = ['date' => $date, 'month' => (int) substr($date, 5, 2), 'modis' => $counts[Instrument::Modis->value], 'viirs' => $counts[Instrument::Viirs->value]];
+            }
+        }
+
+        return $pairs;
     }
 
     /**
@@ -157,7 +179,8 @@ class ModisRetirement
     private function fit(array $train): array
     {
         $minDays = (int) config('continuum.calibration.min_days', 5);
-        $resamples = (int) config('continuum.calibration.bootstrap_samples', 400);
+        // The band only needs to be indicative here; 100 resamples keep a year switch quick.
+        $resamples = min(100, (int) config('continuum.calibration.bootstrap_samples', 400));
         $seed = (int) config('continuum.calibration.seed', 1);
         $ratio = fn (array $subset): array => Statistics::ratioOfSums(array_column($subset, 'modis'), array_column($subset, 'viirs'), $resamples, $seed);
 

@@ -50,6 +50,8 @@ Measured live on the four public areas (all-year monthly ratio → MODIS-equival
 | Gran Chaco           | 0.361 [0.355, 0.367]                | 1,353         | MAE 110 vs 663 (−83%)  | 0.91 |
 | Cerrado & Amazon arc | 0.387 [0.373, 0.401]                | 1,220         | MAE 58 vs 241 (−76%)   | 0.85 |
 
+**When MODIS retires.** The Lab also simulates a MODIS shutdown: switched off on 1 January 2024, VIIRS alone keeps the daily error 62–89% below a naive switch and the monthly shape at r 0.88–0.996, while totals drift by about ±20%. Details in [docs/MODIS-RETIREMENT.md](docs/MODIS-RETIREMENT.md).
+
 The FRP visibility threshold scores within a few points of the ratio on every area. Hispaniola has the weakest daily fit (r 0.63), probably because its fires are small and scattered, so daily counts are noisy; the app flags it in the Method page's "where it works worst" table. Live numbers for any area: `/regions/{slug}/lab` and `/api/v1/regions/{slug}/calibration`.
 
 ## Quick start
@@ -113,6 +115,7 @@ Read-only, no key, 120 requests per minute per client. Base URL `/api/v1`. Full 
 | `GET /regions/{slug}/calendar`         | Harmonized calendar. Query `period=day\|week\|month`, `method=ratio\|frp_threshold`, `reference=modis\|viirs`, `from`, `to`. Includes native values, `estimated` flags, intervals, the naive merge and the method receipt. |
 | `GET /regions/{slug}/calibration`      | All fitted factors with intervals and held-out validation.                                                                                                                                                                 |
 | `GET /regions/{slug}/critical-periods` | Climatological season, peak, onset and the latest period's position.                                                                                                                                                       |
+| `GET /regions/{slug}/modis-retirement` | Simulated MODIS shutdown: refit on days before `year`, later months rebuilt from VIIRS alone and scored against real MODIS. See [docs/MODIS-RETIREMENT.md](docs/MODIS-RETIREMENT.md). |
 | `GET /regions/{slug}/alerts`           | Unusual periods, paginated. Query `period`.                                                                                                                                                                                |
 | `GET /regions/{slug}/export`           | CSV of the harmonized calendar with the receipt as `#` comment lines. Same query as `/calendar`.                                                                                                                           |
 | `GET /hotspots`                        | GeoJSON of 1 km cell-days (or raw pixels with `raw=1`) for one day. Query `bbox=w,s,e,n`, `date=YYYY-MM-DD` (both required), `instrument`, `limit` ≤ 20000.                                                                |

@@ -2,9 +2,11 @@
 
 One continuous burning-activity record from NASA's split MODIS (2000→) and VIIRS (2012→) active-fire archives, harmonized on a common 1 km grid, validated on the years both sensors flew, and published as a calendar with uncertainty for any area of interest.
 
-Built for the **NASA Space Apps Challenge 2026** — _Harmonization of MODIS and VIIRS Hot Spots_ — by team Continuum (Elminson and Miguel), Santiago, Dominican Republic.
+Built for the **NASA Space Apps Challenge 2026** — _Harmonization of MODIS and VIIRS Hot Spots_ — by team Continuum (Elminson and Miguel), Santo Domingo, Dominican Republic.
 
 **Live app:** [continuum.techspark.dev](https://continuum.techspark.dev) · no login needed to explore. To draw your own area, sign in with the shared judge account `judge@continuum.techspark.dev` / `SpaceApps2026!` (up to three areas of about 10° × 10°). English and Spanish.
+
+**Presentation:** [English](docs/presentation/continuum-en.pdf) · [Español](docs/presentation/continuum-es.pdf) (also as HTML in `docs/presentation/`).
 
 ## Challenge
 

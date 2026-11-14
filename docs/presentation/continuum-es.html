@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Continuum — Space Apps 2026 (Español)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Inter:wght@400;600&display=swap">
+<style>
+* { margin:0; box-sizing:border-box; }
+html { background:#05070a; }
+body > section { width:1920px; height:1080px; overflow:hidden; position:relative; isolation:isolate; margin:0 auto 24px; }
+aside { display:none; }
+table { width:100%; border-collapse:collapse; }
+th, td { padding:.35em .6em; border-bottom:2px solid rgba(255,255,255,.18); }
+@media print { @page { size:1920px 1080px; margin:0; } html { background:none; } body > section { margin:0; page-break-after:always; } .rise { animation:none !important; } }
+</style>
+<style>
+:root {
+  --night: #0e131b;
+  --night-2: #161d29;
+  --paper: #f4f2ec;
+  --ink: #141a24;
+  --muted-dark: #b7c0cc;
+  --muted-light: #4a5260;
+  --fire: #f97316;
+  --modis: #60a5fa;
+  --harmonized: #4ade80;
+}
+
+body {
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+section {
+  counter-increment: page;
+  background: var(--night);
+  color: var(--paper);
+  padding: 128px 128px 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+section.paper {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+section.statement {
+  background: var(--fire);
+  color: var(--ink);
+}
+
+h1, h2, h3 {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+}
+
+h1 {
+  font-size: 160px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+h3 {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.eyebrow {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--fire);
+}
+
+.lead {
+  font-size: 44px;
+  line-height: 1.25;
+  color: var(--paper);
+}
+
+.text {
+  font-size: 32px;
+  line-height: 1.35;
+  color: var(--muted-dark);
+}
+
+.paper .text {
+  color: var(--muted-light);
+}
+
+.small {
+  font-size: 24px;
+  line-height: 1.4;
+  color: var(--muted-dark);
+}
+
+.paper .small {
+  color: var(--muted-light);
+}
+
+.footer {
+  position: absolute;
+  left: 128px;
+  bottom: 64px;
+  width: 1664px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 24px;
+  color: var(--muted-dark);
+}
+
+.paper .footer {
+  color: var(--muted-light);
+}
+
+.statement .footer {
+  color: var(--ink);
+}
+
+.shot {
+  border-radius: 16px;
+  object-fit: contain;
+  background: #ffffff;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+}
+
+.paper .shot {
+  box-shadow: 0 20px 50px rgba(20, 26, 36, 0.18);
+}
+
+.row {
+  display: flex;
+  gap: 32px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card {
+  background: var(--night-2);
+  border-radius: 16px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.paper .card {
+  background: #ffffff;
+  border: 1px solid #e2ded3;
+}
+
+.card .label {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.card .detail {
+  font-size: 24px;
+  line-height: 1.4;
+  color: var(--muted-dark);
+}
+
+.paper .card .detail {
+  color: var(--muted-light);
+}
+
+.big {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 112px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--fire);
+}
+
+.num {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.step-n {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--fire);
+  min-width: 56px;
+}
+
+.cover-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  object-fit: cover;
+  filter: brightness(0.38);
+}
+
+.cover-shade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  background: linear-gradient(90deg, rgba(14, 19, 27, 0.92) 0%, rgba(14, 19, 27, 0.35) 100%);
+}
+
+.rise {
+  animation: rise 600ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 120ms);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+</style>
+</head><body>
+<section id="cover" style="justify-content:center; gap:32px;">
+<img class="cover-bg" src="img/cover-es.jpg" alt="">
+<div class="cover-shade"></div>
+<p class="eyebrow rise" style="--i:0">NASA Space Apps Challenge 2026 · Armonización de focos de calor MODIS y VIIRS</p>
+<h1 class="rise" style="--i:1">Continuum</h1>
+<p class="lead rise" style="--i:2; width:1300px;">Un solo calendario de fuego con 26 años de datos satelitales de la NASA</p>
+<p class="text rise" style="--i:3; color:#f4f2ec;">Equipo Continuum · Elminson y Miguel · Santo Domingo, República Dominicana</p>
+<div class="footer"><span>continuum.techspark.dev</span><span>Imagen satelital: NASA GIBS</span></div>
+<aside>Hola, somos Elminson y Miguel, del equipo Continuum, de Santo Domingo. Nuestro reto es la armonización de los focos de calor de MODIS y VIIRS. Continuum convierte 26 años de detecciones de fuego de la NASA en un calendario confiable para cualquier área, empezando por la nuestra: La Española.</aside>
+</section>
+
+<section id="problem">
+<h2>Dos satélites cuentan el mismo fuego de forma distinta</h2>
+<img class="shot rise" style="--i:1; width:1664px; height:462px;" src="img/series-es.jpg" alt="La Española, actividad de fuego mensual 2000 a 2026: la línea nativa de VIIRS salta muy por encima de MODIS desde 2012, mientras la línea armonizada se mantiene en una sola escala">
+<div class="row rise" style="--i:2">
+<div class="card"><p class="label" style="color:#60a5fa">MODIS · desde 2000</p><p class="detail">Píxeles de 1 km en Terra y Aqua</p></div>
+<div class="card"><p class="label" style="color:#f97316">VIIRS · desde 2012</p><p class="detail">Píxeles de 375 m: cerca de 8× más celdas-día con fuego en La Española</p></div>
+<div class="card"><p class="label" style="color:#4ade80">Mezcla ingenua</p><p class="detail">Inventa un auge de incendios en 2012 que nunca ocurrió</p></div>
+</div>
+<div class="footer"><span>Continuum · La Española, mensual, nov 2000 → nov 2026</span><span>2</span></div>
+<aside>MODIS observa incendios desde el 2000 a 1 km. VIIRS llegó en 2012 a 375 m y ve muchos más fuegos pequeños. Si solo se juntan, el registro muestra un auge de incendios en 2012 que en realidad es un satélite nuevo. En La Española, VIIRS reporta cerca de ocho veces más celdas-día con fuego que MODIS.</aside>
+</section>
+
+<section id="method">
+<h2>Armonizado en una sola cuadrícula, comprobado con días reservados</h2>
+<div class="row" style="gap:64px; align-items:flex-start;">
+<div class="col" style="width:760px; gap:32px;">
+<div class="row rise" style="--i:1; gap:20px;"><p class="step-n">1</p><div class="col" style="gap:6px;"><h3>Contar celdas de 1 km, no píxeles</h3><p class="small">Un frente de fuego es una celda-día para ambos sensores.</p></div></div>
+<div class="row rise" style="--i:2; gap:20px;"><p class="step-n">2</p><div class="col" style="gap:6px;"><h3>Unir todos los satélites de cada sensor</h3><p class="small">Terra + Aqua; Suomi NPP + NOAA-20 + NOAA-21.</p></div></div>
+<div class="row rise" style="--i:3; gap:20px;"><p class="step-n">3</p><div class="col" style="gap:6px;"><h3>Modelar la diferencia de sensibilidad</h3><p class="small">Razón mensual con intervalo bootstrap y un umbral de potencia de fuego visible, ajustados con 2012–2026.</p></div></div>
+</div>
+<div class="col rise" style="--i:4; width:840px; gap:20px;">
+<p class="text" style="color:#f4f2ec;">Error frente a la mezcla ingenua, reservando uno de cada cuatro días</p>
+<table style="font-size:32px; color:#f4f2ec;">
+<tr><th style="width:46%; text-align:left;">Área</th><th style="width:27%; text-align:right;">Menos error</th><th style="width:27%; text-align:right;">Días de prueba</th></tr>
+<tr><td style="text-align:left;">La Española</td><td style="text-align:right; color:#4ade80;">−89%</td><td style="text-align:right;">1.352</td></tr>
+<tr><td style="text-align:left;">Cuba</td><td style="text-align:right; color:#4ade80;">−86%</td><td style="text-align:right;">1.344</td></tr>
+<tr><td style="text-align:left;">Gran Chaco</td><td style="text-align:right; color:#4ade80;">−83%</td><td style="text-align:right;">1.353</td></tr>
+<tr><td style="text-align:left;">Cerrado</td><td style="text-align:right; color:#4ade80;">−76%</td><td style="text-align:right;">1.220</td></tr>
+</table>
+</div>
+</div>
+<div class="footer"><span>Razón mensual → equivalente a MODIS, valores en vivo de continuum.techspark.dev</span><span>3</span></div>
+<aside>El desacuerdo son tres problemas. Tamaño del píxel: contamos celdas de 1 km con fuego por día. Número de satélites: unimos todos los satélites de cada sensor. Sensibilidad: VIIRS ve fuegos que MODIS no ve, y lo modelamos con dos funciones de transferencia transparentes, ajustadas con los 14 años en que ambos volaron. Reservamos uno de cada cuatro días y comparamos con la mezcla ingenua: el error baja entre 76 y 89 por ciento en nuestras cuatro áreas públicas. La app también muestra dónde funciona peor.</aside>
+</section>
+
+<section id="calendar" class="paper">
+<h2>Elige un área y lee su calendario de fuego</h2>
+<div class="row" style="gap:64px; align-items:flex-start;">
+<img class="shot rise" style="--i:1; width:554px; height:660px;" src="img/heat-es.jpg" alt="Calendario de actividad de fuego de La Española: una fila por año de 2000 a 2026, más oscuro en marzo">
+<div class="col" style="width:1046px; gap:20px;">
+<div class="card rise" style="--i:2"><p class="label">Elige un área pública o dibuja la tuya</p><p class="detail">O escribe sus esquinas en latitud y longitud.</p></div>
+<div class="card rise" style="--i:3"><p class="label">Escoge las fechas y compara con la mediana de 25 años</p><p class="detail">Focos de calor, actividad armonizada y cómo se compara este periodo con cada año anterior.</p></div>
+<div class="card rise" style="--i:4"><p class="label">Mira la temporada de fuego</p><p class="detail">La Española quema de febrero a abril, con el pico en marzo.</p></div>
+<div class="card rise" style="--i:5"><p class="label">Llévatelo</p><p class="detail">Gráficos en PNG, el calendario y los focos en CSV, una API pública. En español e inglés.</p></div>
+</div>
+</div>
+<div class="footer"><span>Continuum · La Española</span><span>4</span></div>
+<aside>Este es el calendario de La Española: cada fila es un año y cada celda un mes. Marzo resalta todos los años. Se elige una de las cuatro áreas públicas o se dibuja una propia, se escogen las fechas y se ven los focos, la actividad armonizada y la comparación con la mediana de las mismas fechas en años anteriores. Todo se descarga, y la app funciona en español e inglés.</aside>
+</section>
+
+<section id="warning">
+<h2>Alerta temprana: Cuba, semana del 17 de agosto de 2026</h2>
+<div class="row" style="gap:56px; align-items:center;">
+<img class="shot rise" style="--i:1; width:1100px; height:619px;" src="img/alert-es.jpg" alt="Página de Continuum para Cuba, semana del 17 de agosto de 2026: un mapa de celdas con fuego activo en toda la isla y las cifras 321 observado, 15 típico, por 21,4">
+<div class="col" style="width:508px; gap:24px;">
+<p class="big rise" style="--i:2">×21,4</p>
+<p class="text rise" style="--i:3; color:#f4f2ec;">la mediana de la misma semana en otros 25 años</p>
+<p class="small rise" style="--i:4">321 celdas-día equivalentes a MODIS frente a un típico de 15 ± 15.</p>
+<p class="small rise" style="--i:5">Sitios de monitoreo reportaron varios incendios forestales en Cuba entre el 15 y el 25 de agosto de 2026.</p>
+</div>
+</div>
+<div class="footer"><span>continuum.techspark.dev/alerts · z robusto = 20,6</span><span>5</span></div>
+<aside>Por esto la armonización importa para la alerta temprana. Continuum compara cada semana con la misma semana de todos los demás años, en una sola escala. En la semana del 17 de agosto de 2026 marcó a Cuba en 21 veces la mediana, lo más alto del registro. Sitios de monitoreo independientes reportaron incendios en Cuba esos mismos días. Cada periodo inusual tiene su propia página con un mapa de dónde estuvo el fuego.</aside>
+</section>
+
+<section id="data" class="paper">
+<h2>Hecho con datos abiertos de la NASA, funcionando en vivo</h2>
+<div class="row rise" style="--i:1">
+<div class="card"><p class="num">26,2 M</p><p class="detail">detecciones de NASA FIRMS cargadas</p></div>
+<div class="card"><p class="num">26 años</p><p class="detail">de noviembre de 2000 a hoy</p></div>
+<div class="card"><p class="num">Cada hora</p><p class="detail">datos nuevos de FIRMS, rearmonizados cada 6 horas</p></div>
+</div>
+<div class="row rise" style="--i:2">
+<div class="card"><p class="label">MODIS Colección 6.1</p><p class="detail">Terra y Aqua, 1 km, procesamiento estándar y casi en tiempo real</p></div>
+<div class="card"><p class="label">VIIRS 375 m</p><p class="detail">Suomi NPP, NOAA-20, NOAA-21; desde que Suomi NPP se detuvo el 2 nov 2026, siguen NOAA-20 y NOAA-21</p></div>
+<div class="card"><p class="label">Imágenes NASA GIBS</p><p class="detail">La imagen satelital del mismo día bajo cada mapa de fuego</p></div>
+</div>
+<p class="text rise" style="--i:3">Código abierto (MIT) · API JSON pública · 298 pruebas automáticas · github.com/elminson/continuum</p>
+<div class="footer"><span>Datos: NASA FIRMS · NASA GIBS</span><span>6</span></div>
+<aside>Todo viene de datos abiertos de la NASA: las detecciones de fuego activo de FIRMS, de MODIS y VIIRS, 26 millones, y las imágenes de GIBS para los mapas. El sitio trae datos nuevos cada hora. Cuando Suomi NPP se detuvo el 2 de noviembre, pasamos la alimentación en vivo a NOAA-20 y NOAA-21. El código es abierto, con una API pública para que otras herramientas usen el calendario.</aside>
+</section>
+
+<section id="next" class="statement">
+<h2 style="width:1500px;">Lo que sigue: un calendario de fuego para cada agencia del Caribe</h2>
+<div class="col" style="gap:20px;">
+<p class="text rise" style="--i:1; color:#141a24;">Apuntarlo a cualquier territorio, empezando por República Dominicana y Haití.</p>
+<p class="text rise" style="--i:2; color:#141a24;">Mantener la escala de 26 años cuando MODIS se retire: datos solo de VIIRS en la escala de MODIS.</p>
+<p class="text rise" style="--i:3; color:#141a24;">Añadir máscaras de nubes por celda y contraste con área quemada.</p>
+</div>
+<div class="col rise" style="--i:4; gap:8px; margin-top:24px;">
+<p class="lead" style="color:#141a24; font-weight:600;">continuum.techspark.dev</p>
+<p class="small" style="color:#141a24;">Jueces: judge@continuum.techspark.dev · SpaceApps2026! · Código: github.com/elminson/continuum</p>
+</div>
+<div class="footer"><span>Equipo Continuum · Elminson y Miguel · Santo Domingo, República Dominicana</span><span>7</span></div>
+<aside>Lo siguiente es que cualquier agencia de incendios de la región pueda apuntar Continuum a su propio territorio, empezando por el nuestro. Cuando MODIS se retire, el mismo método mantiene la escala de 26 años solo con VIIRS. Pruébenlo ahora en continuum.techspark.dev; el acceso para jueces está en la diapositiva. Gracias.</aside>
+</section>
+
+</body></html>

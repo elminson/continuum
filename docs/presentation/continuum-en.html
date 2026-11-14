@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Continuum — Space Apps 2026</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Inter:wght@400;600&display=swap">
+<style>
+* { margin:0; box-sizing:border-box; }
+html { background:#05070a; }
+body > section { width:1920px; height:1080px; overflow:hidden; position:relative; isolation:isolate; margin:0 auto 24px; }
+aside { display:none; }
+table { width:100%; border-collapse:collapse; }
+th, td { padding:.35em .6em; border-bottom:2px solid rgba(255,255,255,.18); }
+@media print { @page { size:1920px 1080px; margin:0; } html { background:none; } body > section { margin:0; page-break-after:always; } .rise { animation:none !important; } }
+</style>
+<style>
+:root {
+  --night: #0e131b;
+  --night-2: #161d29;
+  --paper: #f4f2ec;
+  --ink: #141a24;
+  --muted-dark: #b7c0cc;
+  --muted-light: #4a5260;
+  --fire: #f97316;
+  --modis: #60a5fa;
+  --harmonized: #4ade80;
+}
+
+body {
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+section {
+  counter-increment: page;
+  background: var(--night);
+  color: var(--paper);
+  padding: 128px 128px 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+section.paper {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+section.statement {
+  background: var(--fire);
+  color: var(--ink);
+}
+
+h1, h2, h3 {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+}
+
+h1 {
+  font-size: 160px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+h3 {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.eyebrow {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--fire);
+}
+
+.lead {
+  font-size: 44px;
+  line-height: 1.25;
+  color: var(--paper);
+}
+
+.text {
+  font-size: 32px;
+  line-height: 1.35;
+  color: var(--muted-dark);
+}
+
+.paper .text {
+  color: var(--muted-light);
+}
+
+.small {
+  font-size: 24px;
+  line-height: 1.4;
+  color: var(--muted-dark);
+}
+
+.paper .small {
+  color: var(--muted-light);
+}
+
+.footer {
+  position: absolute;
+  left: 128px;
+  bottom: 64px;
+  width: 1664px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 24px;
+  color: var(--muted-dark);
+}
+
+.paper .footer {
+  color: var(--muted-light);
+}
+
+.statement .footer {
+  color: var(--ink);
+}
+
+.shot {
+  border-radius: 16px;
+  object-fit: contain;
+  background: #ffffff;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+}
+
+.paper .shot {
+  box-shadow: 0 20px 50px rgba(20, 26, 36, 0.18);
+}
+
+.row {
+  display: flex;
+  gap: 32px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card {
+  background: var(--night-2);
+  border-radius: 16px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.paper .card {
+  background: #ffffff;
+  border: 1px solid #e2ded3;
+}
+
+.card .label {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.card .detail {
+  font-size: 24px;
+  line-height: 1.4;
+  color: var(--muted-dark);
+}
+
+.paper .card .detail {
+  color: var(--muted-light);
+}
+
+.big {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 112px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--fire);
+}
+
+.num {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.step-n {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--fire);
+  min-width: 56px;
+}
+
+.cover-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  object-fit: cover;
+  filter: brightness(0.38);
+}
+
+.cover-shade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  background: linear-gradient(90deg, rgba(14, 19, 27, 0.92) 0%, rgba(14, 19, 27, 0.35) 100%);
+}
+
+.rise {
+  animation: rise 600ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 120ms);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+</style>
+</head><body>
+<section id="cover" style="justify-content:center; gap:32px;">
+<img class="cover-bg" src="img/cover-en.jpg" alt="">
+<div class="cover-shade"></div>
+<p class="eyebrow rise" style="--i:0">NASA Space Apps Challenge 2026 · Harmonization of MODIS and VIIRS Hot Spots</p>
+<h1 class="rise" style="--i:1">Continuum</h1>
+<p class="lead rise" style="--i:2; width:1300px;">One fire calendar from 26 years of NASA satellite data</p>
+<p class="text rise" style="--i:3; color:#f4f2ec;">Team Continuum · Elminson &amp; Miguel · Santo Domingo, Dominican Republic</p>
+<div class="footer"><span>continuum.techspark.dev</span><span>Satellite image: NASA GIBS</span></div>
+<aside>Hi, we are Elminson and Miguel from Santo Domingo. Our challenge is Harmonization of MODIS and VIIRS Hot Spots. Continuum turns 26 years of NASA fire detections into one calendar you can trust for any area, starting with ours: Hispaniola.</aside>
+</section>
+
+<section id="problem">
+<h2>Two satellites count the same fire differently</h2>
+<img class="shot rise" style="--i:1; width:1664px; height:462px;" src="img/series-en.jpg" alt="Hispaniola, monthly fire activity 2000 to 2026: the VIIRS native line jumps far above MODIS from 2012, while the harmonized line stays on one scale">
+<div class="row rise" style="--i:2">
+<div class="card"><p class="label" style="color:#60a5fa">MODIS · since 2000</p><p class="detail">1 km pixels on Terra and Aqua</p></div>
+<div class="card"><p class="label" style="color:#f97316">VIIRS · since 2012</p><p class="detail">375 m pixels: about 8× more fire cell-days on Hispaniola</p></div>
+<div class="card"><p class="label" style="color:#4ade80">Naive merge</p><p class="detail">Invents a fire boom in 2012 that never happened</p></div>
+</div>
+<div class="footer"><span>Continuum · Hispaniola, monthly, Nov 2000 → Nov 2026</span><span>2</span></div>
+<aside>MODIS has watched fires since 2000 at 1 km. VIIRS joined in 2012 at 375 m and sees far more small fires. If you just stack them, the record shows a fire boom in 2012 that is only a new satellite. On Hispaniola VIIRS reports about eight times more fire cell-days than MODIS.</aside>
+</section>
+
+<section id="method">
+<h2>Harmonized on one grid, checked on held-out days</h2>
+<div class="row" style="gap:64px; align-items:flex-start;">
+<div class="col" style="width:760px; gap:32px;">
+<div class="row rise" style="--i:1; gap:20px;"><p class="step-n">1</p><div class="col" style="gap:6px;"><h3>Count 1 km grid cells, not pixels</h3><p class="small">One fire front is one cell-day for both sensors.</p></div></div>
+<div class="row rise" style="--i:2; gap:20px;"><p class="step-n">2</p><div class="col" style="gap:6px;"><h3>Merge every satellite per sensor</h3><p class="small">Terra + Aqua; Suomi NPP + NOAA-20 + NOAA-21.</p></div></div>
+<div class="row rise" style="--i:3; gap:20px;"><p class="step-n">3</p><div class="col" style="gap:6px;"><h3>Model the sensitivity gap</h3><p class="small">Monthly ratio with bootstrap interval, and a fire-power visibility threshold, fitted on 2012–2026.</p></div></div>
+</div>
+<div class="col rise" style="--i:4; width:840px; gap:20px;">
+<p class="text" style="color:#f4f2ec;">Error versus a naive merge, every fourth day held out</p>
+<table style="font-size:32px; color:#f4f2ec;">
+<tr><th style="width:46%; text-align:left;">Area</th><th style="width:27%; text-align:right;">Error cut</th><th style="width:27%; text-align:right;">Test days</th></tr>
+<tr><td style="text-align:left;">Hispaniola</td><td style="text-align:right; color:#4ade80;">−89%</td><td style="text-align:right;">1,352</td></tr>
+<tr><td style="text-align:left;">Cuba</td><td style="text-align:right; color:#4ade80;">−86%</td><td style="text-align:right;">1,344</td></tr>
+<tr><td style="text-align:left;">Gran Chaco</td><td style="text-align:right; color:#4ade80;">−83%</td><td style="text-align:right;">1,353</td></tr>
+<tr><td style="text-align:left;">Cerrado</td><td style="text-align:right; color:#4ade80;">−76%</td><td style="text-align:right;">1,220</td></tr>
+</table>
+</div>
+</div>
+<div class="footer"><span>Monthly ratio → MODIS-equivalent, live values from continuum.techspark.dev</span><span>3</span></div>
+<aside>The disagreement is three problems. Pixel size: we count distinct 1 km cells with fire per day. Fleet size: all satellites of a sensor are merged. Sensitivity: VIIRS sees fires MODIS cannot, so we model it with two transparent transfer functions fitted on the 14 years both flew. We hold out every fourth day and compare against a naive merge: the error drops by 76 to 89 percent on our four public areas. The app also shows where it works worst.</aside>
+</section>
+
+<section id="calendar" class="paper">
+<h2>Pick an area, read its fire calendar</h2>
+<div class="row" style="gap:64px; align-items:flex-start;">
+<img class="shot rise" style="--i:1; width:554px; height:660px;" src="img/heat-en.jpg" alt="Hispaniola fire activity calendar: one row per year from 2000 to 2026, darkest in March">
+<div class="col" style="width:1046px; gap:20px;">
+<div class="card rise" style="--i:2"><p class="label">Choose a public area or draw your own box</p><p class="detail">Or type its corners in latitude and longitude.</p></div>
+<div class="card rise" style="--i:3"><p class="label">Set the dates, compare with the 25-year median</p><p class="detail">Hotspots, harmonized activity and how this period ranks against every earlier year.</p></div>
+<div class="card rise" style="--i:4"><p class="label">See the fire season</p><p class="detail">Hispaniola burns from February to April, peaking in March.</p></div>
+<div class="card rise" style="--i:5"><p class="label">Take it with you</p><p class="detail">Charts as PNG, the calendar and the raw hotspots as CSV, a public API. English and Spanish.</p></div>
+</div>
+</div>
+<div class="footer"><span>Continuum · Hispaniola</span><span>4</span></div>
+<aside>This is the calendar for Hispaniola: each row is a year, each cell a month. March stands out every year. Users pick one of four public areas or draw their own, choose dates, and see the hotspots, harmonized activity and the comparison with the median of the same dates in earlier years. Everything downloads, and the app speaks English and Spanish.</aside>
+</section>
+
+<section id="warning">
+<h2>Early warning: Cuba, week of 17 August 2026</h2>
+<div class="row" style="gap:56px; align-items:center;">
+<img class="shot rise" style="--i:1; width:1100px; height:619px;" src="img/alert-en.jpg" alt="Continuum page for Cuba, week of 17 August 2026: a map of active fire cells across the island and the figures 321 observed, 15 typical, times 21.4">
+<div class="col" style="width:508px; gap:24px;">
+<p class="big rise" style="--i:2">×21.4</p>
+<p class="text rise" style="--i:3; color:#f4f2ec;">the median of the same week in 25 other years</p>
+<p class="small rise" style="--i:4">321 MODIS-equivalent cell-days against a typical 15 ± 15.</p>
+<p class="small rise" style="--i:5">Fire trackers reported several wildfires across Cuba on 15–25 August 2026.</p>
+</div>
+</div>
+<div class="footer"><span>continuum.techspark.dev/alerts · robust z = 20.6</span><span>5</span></div>
+<aside>This is why harmonization matters for early warning. Continuum compares every week with the same week in all other years, on one scale. In the week of 17 August 2026 it flagged Cuba at 21 times the median, the highest of the record. Independent fire trackers reported wildfires across Cuba on those same days. Each unusual period has its own page with a map of where the fire was.</aside>
+</section>
+
+<section id="data" class="paper">
+<h2>Built on NASA open data, running live</h2>
+<div class="row rise" style="--i:1">
+<div class="card"><p class="num">26.2 M</p><p class="detail">NASA FIRMS detections ingested</p></div>
+<div class="card"><p class="num">26 years</p><p class="detail">November 2000 to today</p></div>
+<div class="card"><p class="num">Hourly</p><p class="detail">new FIRMS data, re-harmonized every 6 hours</p></div>
+</div>
+<div class="row rise" style="--i:2">
+<div class="card"><p class="label">MODIS Collection 6.1</p><p class="detail">Terra and Aqua, 1 km, standard and near real-time</p></div>
+<div class="card"><p class="label">VIIRS 375 m</p><p class="detail">Suomi NPP, NOAA-20, NOAA-21; after Suomi NPP stopped on 2 Nov 2026, NOAA-20 and NOAA-21 carry on</p></div>
+<div class="card"><p class="label">NASA GIBS imagery</p><p class="detail">The same-day satellite image under every fire map</p></div>
+</div>
+<p class="text rise" style="--i:3">Open source (MIT) · public JSON API · 298 automated tests · github.com/elminson/continuum</p>
+<div class="footer"><span>Data: NASA FIRMS · NASA GIBS</span><span>6</span></div>
+<aside>Everything comes from NASA open data: FIRMS active fire detections from MODIS and VIIRS, 26 million of them, and GIBS imagery for the maps. The site pulls new data every hour. When Suomi NPP stopped on 2 November we moved the live feed to NOAA-20 and NOAA-21. The code is open source, with a public API so other tools can use the calendar.</aside>
+</section>
+
+<section id="next" class="statement">
+<h2 style="width:1500px;">Next: a fire calendar for every agency in the Caribbean</h2>
+<div class="col" style="gap:20px;">
+<p class="text rise" style="--i:1; color:#141a24;">Point it at any territory, starting with the Dominican Republic and Haiti.</p>
+<p class="text rise" style="--i:2; color:#141a24;">Keep the 26-year scale when MODIS retires: VIIRS-only data on the MODIS scale.</p>
+<p class="text rise" style="--i:3; color:#141a24;">Add per-cell cloud masks and burned-area cross-checks.</p>
+</div>
+<div class="col rise" style="--i:4; gap:8px; margin-top:24px;">
+<p class="lead" style="color:#141a24; font-weight:600;">continuum.techspark.dev</p>
+<p class="small" style="color:#141a24;">Judges: judge@continuum.techspark.dev · SpaceApps2026! · Code: github.com/elminson/continuum</p>
+</div>
+<div class="footer"><span>Team Continuum · Elminson &amp; Miguel · Santo Domingo, Dominican Republic</span><span>7</span></div>
+<aside>Next, we want any fire agency in the region to point Continuum at its own territory, starting with ours. As MODIS retires, the same method keeps the 26-year scale with VIIRS alone. Try it now at continuum.techspark.dev; the judge login is on the slide. Thank you.</aside>
+</section>
+
+</body></html>

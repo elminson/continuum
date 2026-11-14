@@ -33,6 +33,14 @@ return [
         'batch' => (int) env('ALERT_ANALYST_BATCH', 60),
     ],
 
+    // Shared account for judges: sign-in details are locked and areas capped.
+    'demo' => [
+        'email' => env('CONTINUUM_DEMO_EMAIL'),
+        'max_areas' => (int) env('CONTINUUM_DEMO_MAX_AREAS', 3),
+        // Largest box, in square degrees (Hispaniola is about 55).
+        'max_area_degrees' => (float) env('CONTINUUM_DEMO_MAX_AREA_DEGREES', 100),
+    ],
+
     'schedule' => [
         // FIRMS refreshes its near-real-time global feeds through the day. Pull
         // the last 24 h every hour: detections are fingerprinted, so the

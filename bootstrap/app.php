@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ProtectDemoAccount;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
@@ -36,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             SetLocale::class,
             HandleInertiaRequests::class,
+            ProtectDemoAccount::class,
             // Preload only the first chunks: the full list overflowed the proxy header buffer (502).
             AddLinkHeadersForPreloadedAssets::using(12),
         ]);

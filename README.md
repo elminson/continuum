@@ -2,7 +2,9 @@
 
 One continuous burning-activity record from NASA's split MODIS (2000→) and VIIRS (2012→) active-fire archives, harmonized on a common 1 km grid, validated on the years both sensors flew, and published as a calendar with uncertainty for any area of interest.
 
-Built for the **NASA Space Apps Challenge 2026** — _Harmonization of MODIS and VIIRS Hot Spots_.
+Built for the **NASA Space Apps Challenge 2026** — _Harmonization of MODIS and VIIRS Hot Spots_ — by Elminson and Miguel, Santiago, Dominican Republic.
+
+**Live app:** [continuum.techspark.dev](https://continuum.techspark.dev) · no login needed to explore. To draw your own area, sign in with the shared judge account `judge@continuum.techspark.dev` / `SpaceApps2026!` (up to three areas of about 10° × 10°). English and Spanish.
 
 ## Challenge
 
@@ -17,7 +19,7 @@ Built for the **NASA Space Apps Challenge 2026** — _Harmonization of MODIS and
 | _a web application_                                    | Laravel 13 + Inertia/Vue app with public pages (no login needed to explore) and a public JSON API.                                                                                                                             |
 | _harmonizes these records_                             | Snaps every MODIS and VIIRS pixel to one ~1 km equal-area grid, collapses them to **active cell-days**, then fits two transfer functions on the 2012→ overlap so either sensor's record can be expressed on the other's scale. |
 | _into a burning activity calendar_                     | Daily, weekly and monthly calendar per area, as a time series with confidence band, a year × month/week heatmap, and a CSV export that carries its own provenance.                                                             |
-| _within a selected area of interest_                   | Four preset areas ship with real FIRMS samples; signed-in users draw their own rectangular areas, and with a FIRMS key the full 2000→ history is fetched and harmonized for them automatically, newest windows first.          |
+| _within a selected area of interest_                   | Four public areas with the full Nov 2000 → today record (Gran Chaco, Cerrado & Amazon arc, Hispaniola, Cuba); signed-in users draw a box on the map or type its corners, and the full 2000→ history is fetched and harmonized for them automatically, newest windows first. |
 | _examine historical fire patterns_                     | Harmonized series with native MODIS and VIIRS overlays, FRP totals, day/night and confidence mix.                                                                                                                              |
 | _unusual conditions_                                   | Robust anomaly screening (median ± MAD against the same week/month in other years) with watch / warning / critical severities.                                                                                                 |
 | _critical periods_                                     | Climatological fire season (start, end, onset, peak) derived from the harmonized record, with the latest observation placed inside or outside it.                                                                              |
@@ -35,16 +37,16 @@ The disagreement between the two records is really three problems, and Continuum
 
 Every factor is fitted on three quarters of the overlap days and scored on an **interleaved holdout** (every fourth day), and the app reports MAE, bias, RMSE, R² and correlation for the harmonized series **and for the naive merge**, so you can see whether the transfer beats doing nothing. The reference sensor's own observations are always used when it flew; transfers are applied only where it is absent, and every transferred value is flagged `estimated`. A **method receipt** (sources, ingest runs, grid, method, factor, interval, validation, caveats) ships with every export and API response.
 
-Measured on the bundled samples (8 overlap days, 2026-09-18 → 2026-09-25, so 2 holdout days — small-sample numbers, not climatologies):
+Measured live on the four public areas (all-year monthly ratio → MODIS-equivalent, fitted on the 2012-01-20 → 2026-11 overlap and scored on interleaved held-out days):
 
-| Area                 | MODIS/VIIRS cell-day ratio | τ (MW) | Holdout error vs naive merge |
-| -------------------- | -------------------------- | ------ | ---------------------------- |
-| Gran Chaco           | 0.244 [0.153, 0.337]       | 20     | MAE 305 vs 1 810.5 (−83%)    |
-| Cerrado & Amazon arc | 0.227                      | 30     | −95%                         |
-| Northern Australia   | 0.219                      | 30     | −94%                         |
-| Borneo & Sumatra     | 0.234                      | 15     | −94%                         |
+| Area                 | MODIS/VIIRS cell-day ratio [95% CI] | Held-out days | Error vs naive merge  | r    |
+| -------------------- | ----------------------------------- | ------------- | --------------------- | ---- |
+| Hispaniola           | 0.128 [0.124, 0.132]                | 1,352         | MAE 3.0 vs 26.6 (−89%) | 0.63 |
+| Cuba                 | 0.230 [0.222, 0.237]                | 1,344         | MAE 8.4 vs 58.8 (−86%) | 0.85 |
+| Gran Chaco           | 0.361 [0.355, 0.367]                | 1,353         | MAE 110 vs 663 (−83%)  | 0.91 |
+| Cerrado & Amazon arc | 0.387 [0.373, 0.401]                | 1,220         | MAE 58 vs 241 (−76%)   | 0.85 |
 
-Across the samples VIIRS reports ≈ 9.2× as many pixels as MODIS; after 1 km gridding ≈ 6× remains — that residual is sensitivity, and it is what the transfer functions close.
+The FRP visibility threshold scores within a few points of the ratio on every area. Hispaniola has the weakest daily fit (r 0.63), probably because its fires are small and scattered, so daily counts are noisy; the app flags it in the Method page's "where it works worst" table. Live numbers for any area: `/regions/{slug}/lab` and `/api/v1/regions/{slug}/calibration`.
 
 ## Quick start
 
@@ -127,7 +129,7 @@ Laravel 13 · PHP 8.4 · Inertia 3 + Vue 3 + TypeScript · Tailwind CSS 4 · sha
 ## Testing & quality
 
 ```bash
-composer test               # Pint check, PHPStan, then the Pest suite (222 tests)
+composer test               # Pint check, PHPStan, then the Pest suite (298 tests)
 composer run types:check    # PHPStan level 7 over app/, config/, database/, routes/
 npm run types:check         # vue-tsc
 npm run check               # vite-plus lint + format check
@@ -137,9 +139,9 @@ npm run check               # vite-plus lint + format check
 
 ## Data & credits
 
-- NASA FIRMS **MODIS Collection 6.1** active fire (Terra + Aqua, 1 km) and **VIIRS Collection 2 375 m** active fire (Suomi NPP, NOAA-20, NOAA-21). Bundled samples are clipped from the public 7-day feeds; historical backfills use the FIRMS Area API.
+- NASA FIRMS **MODIS Collection 6.1** active fire (Terra + Aqua, 1 km) and **VIIRS Collection 2 375 m** active fire (Suomi NPP, NOAA-20, NOAA-21). Bundled samples are clipped from the public 7-day feeds; historical backfills use the FIRMS Area API; the live site pulls the key-free global feeds every hour. Suomi NPP stopped delivering observations on 2 November 2026, so near-real-time pulls now use MODIS, NOAA-20 and NOAA-21 while the Suomi NPP archive stays in the record.
 - Schroeder, W., Oliva, P., Giglio, L., Csiszar, I. A. (2014). _The New VIIRS 375 m active fire detection data product: Algorithm description and initial assessment._ Remote Sensing of Environment, 143, 85–96.
-- Giglio, L. et al., MODIS active fire product (Collection 6.1).
+- Giglio, L., Schroeder, W., Justice, C. O. (2016). _The collection 6 MODIS active fire detection algorithm and fire products._ Remote Sensing of Environment, 178, 31–41.
 - Basemap imagery: NASA GIBS (VIIRS NOAA-20 corrected reflectance true colour for the selected day; Blue Marble otherwise); borders and place names: Esri World Boundaries and Places.
 - Challenge image photo credit: CONAE (Comisión Nacional de Actividades Espaciales, Argentina).
 
@@ -149,7 +151,13 @@ npm run check               # vite-plus lint + format check
 - Near-real-time records are replaced by standard-processing records when a backfill runs; values can change slightly.
 - Areas of interest are rectangles; areas crossing the antimeridian are not supported.
 - Anomaly screening needs at least three reference years for the same week or month, so it stays silent on the bundled sample.
-- The bundled sample covers 8 days; the numbers above are small-sample results, not climatologies. Backfill to obtain per-month factors.
+- The bundled sample used by `continuum:demo` covers 8 days; run a backfill to reproduce the live numbers above.
+
+## Use of AI
+
+- **Code:** written with Claude Code (Anthropic) as a coding assistant; those commits carry a `Co-Authored-By: Claude` line.
+- **In the app:** the optional "AI reading" on an unusual period comes from a self-hosted open model (Qwen2.5-7B-Instruct on Ollama) and is labelled _advisory_. The statistics flag the period; the model only explains it.
+- **Demo video:** the narration is AI-generated text-to-speech, stated on screen and in the file metadata; every visual is a real screenshot of the app.
 
 ## License
 

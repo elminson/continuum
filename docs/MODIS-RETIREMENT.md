@@ -4,7 +4,18 @@ Built during the event (14 November 2026).
 
 ## Why it matters
 
-MODIS has flown on Terra since 1999 and on Aqua since 2002. Both satellites are past their design life and NASA is winding them down. After that, only VIIRS will keep watching fires. The 26-year fire record is on the MODIS scale, and VIIRS sees several times more fire (about 8× on Hispaniola). Unless VIIRS is put on the MODIS scale, the first year without MODIS looks like a sudden jump in fire that never happened.
+MODIS has flown on Terra since 1999 and on Aqua since 2002. Both satellites are low on fuel and drifting out of their orbits, and NASA is shutting them down:
+
+| Satellite | NASA's planned end of MODIS science data |
+| --- | --- |
+| Aqua | around August–September 2026 (one Copernicus source says September 2027) |
+| Terra | around January 2027 |
+
+NASA says the Terra and Aqua platforms "will begin shutting down operations" in late 2026 or early 2027. As of 14 November 2026, both are still delivering fire detections to FIRMS (more than 41,000 in Continuum's last 7 days). No MODIS follow-on is planned, so VIIRS (NOAA-20, NOAA-21) carries the record from here.
+
+The 26-year fire record is on the MODIS scale, and VIIRS sees several times more fire (about 8× on Hispaniola). Unless VIIRS is put on the MODIS scale, the first year without MODIS looks like a sudden jump in fire that never happened.
+
+Sources: [NASA LAADS, MODIS to VIIRS transition](https://ladsweb.modaps.eosdis.nasa.gov/learn/modis-to-viirs-transition), [NASA Earthdata, transition from MODIS to VIIRS](https://www.earthdata.nasa.gov/data/alerts-outages/transition-from-modis-viirs), [Copernicus CAMS, drifting away from MODIS](https://atmosphere.copernicus.eu/drifting-away-modis-cams-global-fire-assimilation-system).
 
 ## What the simulation does
 

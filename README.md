@@ -2,7 +2,7 @@
 
 One continuous burning-activity record from NASA's split MODIS (2000→) and VIIRS (2012→) active-fire archives, harmonized on a common 1 km grid, validated on the years both sensors flew, and published as a calendar with uncertainty for any area of interest.
 
-Built for the **NASA Space Apps Challenge 2026** — _Harmonization of MODIS and VIIRS Hot Spots_ — by Elminson and Miguel, Santiago, Dominican Republic.
+Built for the **NASA Space Apps Challenge 2026** — _Harmonization of MODIS and VIIRS Hot Spots_ — by team Continuum (Elminson and Miguel), Santiago, Dominican Republic.
 
 **Live app:** [continuum.techspark.dev](https://continuum.techspark.dev) · no login needed to explore. To draw your own area, sign in with the shared judge account `judge@continuum.techspark.dev` / `SpaceApps2026!` (up to three areas of about 10° × 10°). English and Spanish.
 
@@ -156,7 +156,7 @@ npm run check               # vite-plus lint + format check
 ## Use of AI
 
 - **Code:** written with Claude Code (Anthropic) as a coding assistant; those commits carry a `Co-Authored-By: Claude` line.
-- **In the app:** the optional "AI reading" on an unusual period comes from a self-hosted open model (Qwen2.5-7B-Instruct on Ollama) and is labelled _advisory_. The statistics flag the period; the model only explains it.
+- **In the app:** the optional "AI reading" on an unusual period comes from a self-hosted open model (Gemma 4 26B on Ollama) and is labelled _advisory_. The statistics flag the period; the model only explains it.
 - **Demo video:** the narration is AI-generated text-to-speech, stated on screen and in the file metadata; every visual is a real screenshot of the app.
 
 ## License

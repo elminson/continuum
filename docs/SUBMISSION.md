@@ -51,7 +51,7 @@ Each transfer is fitted on three quarters of the overlap days and scored on the 
 
 Yes.
 - **Code:** we used Claude Code (Anthropic) as a coding assistant to write, test and review parts of the Laravel and Vue code; those commits are marked `Co-Authored-By: Claude` in the public git history.
-- **In the app:** the optional "AI reading" on unusual periods uses a self-hosted open model (Qwen2.5-7B-Instruct through Ollama) and is labelled "advisory". The statistics flag the period; the model only explains it.
+- **In the app:** the optional "AI reading" on unusual periods uses a self-hosted open model (Gemma 4 26B, gemma4:26b-a4b, through Ollama) and is labelled "advisory". The statistics flag the period; the model only explains it.
 - **Demo video:** the narration is AI-generated text-to-speech (Microsoft neural voices). This is stated on screen, in the video description and in the file metadata. Every visual is a real screenshot of the app.
 - **Translation:** the Spanish interface text was drafted with AI assistance.
 
@@ -71,7 +71,7 @@ We did not use Space Agency Partner datasets.
 Data, code and tools:
 - Esri World Boundaries and Places (map labels).
 - MapLibre GL JS, Apache ECharts, Laravel, Inertia.js, Vue.js, Tailwind CSS, shadcn-vue, PostgreSQL, Pest, PHPStan (open-source).
-- Ollama with Qwen2.5-7B-Instruct (advisory text on alerts).
+- Ollama with Gemma 4 26B (advisory text on alerts).
 - Claude Code (Anthropic) coding assistant; Microsoft neural text-to-speech voices, Playwright and FFmpeg for the demo video.
 
 References:

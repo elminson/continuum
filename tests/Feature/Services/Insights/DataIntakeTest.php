@@ -155,3 +155,20 @@ it('builds the intake in the same number of queries however many areas there are
 
     expect($queries(1))->toBe($queries(5));
 });
+
+it('drops a failure once a later run for the area has completed', function () {
+    $preset = Region::factory()->preset()->create();
+
+    IngestRun::factory()->create([
+        'region_id' => $preset->id,
+        'status' => IngestStatus::Failed,
+        'error' => 'SQLSTATE[08006] connection timed out',
+        'started_at' => now()->subHours(3),
+    ]);
+    IngestRun::factory()->create([
+        'region_id' => $preset->id,
+        'started_at' => now()->subHour(),
+    ]);
+
+    expect(app(DataIntake::class)->forPresets()['areas'][0]['last_error'])->toBeNull();
+});

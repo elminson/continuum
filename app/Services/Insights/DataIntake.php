@@ -87,11 +87,12 @@ class DataIntake
             ->get()
             ->keyBy('region_id');
 
-        // Latest failure per area: Postgres DISTINCT ON keeps the first row of
-        // each region in the given order.
+        // Latest failure per area that no later run has recovered from:
+        // Postgres DISTINCT ON keeps the first row of each region in the given order.
         $lastErrors = IngestRun::query()
             ->whereIn('region_id', $regionIds)
             ->where('status', IngestStatus::Failed->value)
+            ->whereRaw("started_at > coalesce((select max(done.started_at) from ingest_runs as done where done.region_id = ingest_runs.region_id and done.status = ?), '-infinity'::timestamp)", [IngestStatus::Completed->value])
             ->selectRaw('distinct on (region_id) region_id, error')
             ->orderBy('region_id')
             ->orderByDesc('started_at')

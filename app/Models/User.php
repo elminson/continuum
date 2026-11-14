@@ -47,4 +47,14 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    /**
+     * The shared account handed to judges (CONTINUUM_DEMO_EMAIL).
+     */
+    public function isDemo(): bool
+    {
+        $email = config('continuum.demo.email');
+
+        return is_string($email) && $email !== '' && strcasecmp($this->email, $email) === 0;
+    }
 }

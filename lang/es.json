@@ -782,5 +782,8 @@
     "with a baseline judged too thin to trust": "con una línea base considerada demasiado escasa para confiar",
     "your area": "tu área",
     "yrs": "años",
-    "Σ predicted :predicted vs Σ MODIS :observed": "Σ estimado :predicted frente a Σ MODIS :observed"
+    "Σ predicted :predicted vs Σ MODIS :observed": "Σ estimado :predicted frente a Σ MODIS :observed",
+    "The demo account cannot change its sign-in details.": "La cuenta de demostración no puede cambiar sus datos de acceso.",
+    "The demo account can keep :max areas. Delete one to add another.": "La cuenta de demostración puede tener :max áreas. Elimina una para agregar otra.",
+    "Demo areas are limited to about 10° × 10°. Draw a smaller box.": "Las áreas de demostración tienen un límite de unos 10° × 10°. Dibuja un recuadro más pequeño."
 }

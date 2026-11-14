@@ -800,5 +800,6 @@
     "MODIS (real)": "MODIS (real)",
     "VIIRS only → MODIS scale": "Solo VIIRS → escala MODIS",
     "MODIS off (simulated)": "MODIS apagado (simulado)",
-    "cell-days / month": "celdas-día / mes"
+    "cell-days / month": "celdas-día / mes",
+    "Simulated MODIS shutdown. Query: year. The ratio is refitted on days before 1 January of that year, later months are rebuilt from VIIRS alone and scored against the real MODIS record.": "Apagado simulado de MODIS. Parámetro: year. La razón se reajusta con los días anteriores al 1 de enero de ese año; los meses posteriores se reconstruyen solo con VIIRS y se comparan con el registro real de MODIS."
 }

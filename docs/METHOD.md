@@ -130,6 +130,10 @@ z        = (observed − expected) / spread
 
 At least `min_years = 3` reference years are required. Severity from `z`: ≥ 1.5 watch, ≥ 2.5 warning, ≥ 4.0 critical. Alerts also store the percentile rank of the observation within the reference years and a plain-language message. `HarmonizeRegion` runs this for weeks and months with `ratio` / `modis`.
 
+## MODIS retirement test
+
+`ModisRetirement` refits the monthly ratio on overlap days before a chosen year, rebuilds the later months from VIIRS alone and scores them against the real MODIS record. See [MODIS-RETIREMENT.md](MODIS-RETIREMENT.md) for results and the drift it reveals.
+
 ## 6. Provenance and limits
 
 `MethodReceipt` attaches to every calendar API response and CSV export: application and method version, region and bounding box, grid definition, method, reference, factor, 95% interval, overlap window and days, validation, calibration time, data sources, the latest 20 completed ingest runs, and caveats.
